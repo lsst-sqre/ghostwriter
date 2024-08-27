@@ -14,10 +14,12 @@ asgi-lifespan
 coverage[toml]
 httpx
 mypy
-pydantic
 pytest
 pytest-asyncio
 pytest-cov
+
+# Typing
+types-PyYAML
 
 # Documentation
 scriv

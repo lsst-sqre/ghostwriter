@@ -11,16 +11,18 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from importlib.metadata import metadata, version
 
+import structlog
 from fastapi import FastAPI
 from safir.dependencies.http_client import http_client_dependency
 from safir.logging import configure_logging, configure_uvicorn_logging
 from safir.middleware.x_forwarded import XForwardedMiddleware
+from safir.slack.webhook import SlackRouteErrorHandler
 
 from .config import config
 from .handlers.external import external_router
 from .handlers.internal import internal_router
 
-__all__ = ["app"]
+__all__ = ["app", "lifespan"]
 
 
 @asynccontextmanager
@@ -58,3 +60,11 @@ app.include_router(external_router, prefix=f"{config.path_prefix}")
 
 # Add middleware.
 app.add_middleware(XForwardedMiddleware)
+
+# Enable Slack alerting for uncaught exceptions.
+if config.alert_hook:
+    logger = structlog.get_logger("ghostwriter")
+    SlackRouteErrorHandler.initialize(
+        str(config.alert_hook), "ghostwriter", logger
+    )
+    logger.debug("Initialized Slack webhook")

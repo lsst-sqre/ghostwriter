@@ -1,13 +1,16 @@
 """Handlers for the app's external root, ``/ghostwriter/``."""
 
 from typing import Annotated
+from urllib.parse import urljoin
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import RedirectResponse
 from safir.dependencies.logger import logger_dependency
 from safir.metadata import get_metadata
 from structlog.stdlib import BoundLogger
 
 from ..config import config
+from ..dependencies.context import RequestContext, context_dependency
 from ..models import Index
 
 __all__ = ["get_index", "external_router"]
@@ -50,3 +53,34 @@ async def get_index(
         application_name=config.name,
     )
     return Index(metadata=metadata)
+
+
+@external_router.api_route(
+    "/ghostwriter/rewrite/{full_path:path}",
+    methods=[
+        "GET",
+        "PUT",
+        "POST",
+        "DELETE",
+        "PATCH",
+        "HEAD",
+        "CONNECT",
+        "OPTIONS",
+        "TRACE",
+    ],
+)
+async def rewrite(
+    full_path: str,
+    context: Annotated[RequestContext, Depends(context_dependency)],
+) -> RedirectResponse:
+    user = context.user
+    base_url = str(context.factory.context.base_url)
+    (key, path) = full_path.split(
+        sep="/", maxsplit=1
+    )  # ValueError if no split
+    mapping = context.factory.context.mapping
+    if key not in mapping:
+        raise ValueError(f"No mapping for '{key}'")
+    resolved = mapping.key.format(user=user)
+    url = urljoin(base_url, resolved)
+    return RedirectResponse(str(url))

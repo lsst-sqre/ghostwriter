@@ -1,6 +1,7 @@
 """Handlers for the app's external root, ``/ghostwriter/``."""
 
 from typing import Annotated
+from urllib.parse import urljoin
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
@@ -11,7 +12,6 @@ from structlog.stdlib import BoundLogger
 from ..config import config
 from ..dependencies.context import RequestContext, context_dependency
 from ..models.index import Index
-from ..models.substitution import Parameters
 
 __all__ = ["get_index", "external_router"]
 
@@ -73,11 +73,14 @@ async def rewrite(
     full_path: str,
     context: Annotated[RequestContext, Depends(context_dependency)],
 ) -> RedirectResponse:
-    params = Parameters(
-        user=context.user,
-        base_url=str(context.factory.context.base_url),
-        path=full_path,
-    )
+    user = context.user
+    base_url = str(context.factory.context.base_url)
+    (key, path) = full_path.split(
+        sep="/", maxsplit=1
+    )  # ValueError if no split
     mapping = context.factory.context.mapping
-    resolved = await mapping.resolve(params)
-    return RedirectResponse(resolved)
+    if key not in mapping:
+        raise ValueError(f"No mapping for '{key}'")
+    resolved = mapping.key.format(user=user)
+    url = urljoin(base_url, resolved)
+    return RedirectResponse(str(url))

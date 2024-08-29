@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import structlog
 import yaml
-from httpx import AsyncClient
 from safir.slack.webhook import SlackWebhookClient
 from structlog.stdlib import BoundLogger
 
@@ -19,11 +18,6 @@ class ProcessContext:
     This object caches all of the per-process singletons that can be reused
     for every request.
 
-    Parameters
-    ----------
-    http_client
-        Shared HTTP client.
-
     Attributes
     ----------
     base_url
@@ -33,7 +27,7 @@ class ProcessContext:
         Rewrite mapping; read from file specified in config.
     """
 
-    def __init__(self, http_client: AsyncClient) -> None:
+    def __init__(self) -> None:
         self.logger = structlog.get_logger("ghostwriter")
         self.config = config_dependency.config
         self.base_url = self.config.environment_url

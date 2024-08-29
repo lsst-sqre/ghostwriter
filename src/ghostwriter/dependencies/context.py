@@ -9,15 +9,16 @@ including from dependencies.
 from dataclasses import dataclass
 from typing import Annotated, Any
 
+import httpx
 from fastapi import Depends, Request
 from safir.dependencies.gafaelfawr import (
     auth_delegated_token_dependency,
     auth_dependency,
     auth_logger_dependency,
 )
-from safir.dependencies.http_client import http_client_dependency
 from structlog.stdlib import BoundLogger
 
+from ..constants import HTTP_TIMEOUT
 from ..factory import Factory, ProcessContext
 
 __all__ = [
@@ -46,6 +47,9 @@ class RequestContext:
     token: str
     """Token corresponding to authenticated user."""
 
+    http_client: httpx.AsyncClient
+    """HTTP Client initialized with correct token."""
+
     def rebind_logger(self, **values: Any) -> None:
         """Add the given values to the logging context.
 
@@ -69,6 +73,7 @@ class ContextDependency:
 
     def __init__(self) -> None:
         self._process_context: ProcessContext | None = None
+        self._client_cache: dict[str, httpx.AsyncClient] = {}
 
     async def __call__(
         self,
@@ -80,11 +85,25 @@ class ContextDependency:
         """Create a per-request context."""
         if not self._process_context:
             raise RuntimeError("ContextDependency not initialized")
+        if token not in self._client_cache:
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+            self._client_cache[token] = httpx.AsyncClient(
+                timeout=HTTP_TIMEOUT,
+                follow_redirects=True,
+                headers=headers,
+                base_url=str(self._process_context.base_url),
+            )
+        http_client = self._client_cache[token]
+
         return RequestContext(
             request=request,
             logger=logger,
             user=user,
             token=token,
+            http_client=http_client,
             factory=Factory(self._process_context, logger),
         )
 
@@ -98,11 +117,17 @@ class ContextDependency:
         """Initialize the process-wide shared context."""
         if self._process_context:
             await self._process_context.aclose()
-        http_client = await http_client_dependency()
-        self._process_context = ProcessContext(http_client)
+        self._process_context = ProcessContext()
 
     async def aclose(self) -> None:
         """Clean up the per-process configuration."""
+        # Remove all our cached HTTP clients
+        del_cli: list[str] = []  # Don't modify dict while looping over it.
+        for tok in self._client_cache:
+            await self._client_cache[tok].aclose()
+            del_cli.append(tok)
+        for tok in del_cli:
+            del self._client_cache[tok]
         if self._process_context:
             await self._process_context.aclose()
         self._process_context = None

@@ -62,5 +62,6 @@ async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
         # Pydantic URLs and HTTPx URLs aren't the same thing, but it will
         # take a string in the constructor.
         base_url=str(config.environment_url),
+        follow_redirects=False,
     ) as client:
         yield client

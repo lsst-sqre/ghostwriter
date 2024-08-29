@@ -10,7 +10,11 @@ from dataclasses import dataclass
 from typing import Annotated, Any
 
 from fastapi import Depends, Request
-from safir.dependencies.gafaelfawr import auth_logger_dependency
+from safir.dependencies.gafaelfawr import (
+    auth_delegated_token_dependency,
+    auth_dependency,
+    auth_logger_dependency,
+)
 from safir.dependencies.http_client import http_client_dependency
 from structlog.stdlib import BoundLogger
 
@@ -38,6 +42,9 @@ class RequestContext:
 
     user: str
     """Authenticated user."""
+
+    token: str
+    """Token corresponding to authenticated user."""
 
     def rebind_logger(self, **values: Any) -> None:
         """Add the given values to the logging context.
@@ -67,7 +74,8 @@ class ContextDependency:
         self,
         request: Request,
         logger: Annotated[BoundLogger, Depends(auth_logger_dependency)],
-        user: str,
+        user: Annotated[str, Depends(auth_dependency)],
+        token: Annotated[str, Depends(auth_delegated_token_dependency)],
     ) -> RequestContext:
         """Create a per-request context."""
         if not self._process_context:
@@ -76,7 +84,8 @@ class ContextDependency:
             request=request,
             logger=logger,
             user=user,
-            factory=Factory(self._process_context, logger, user),
+            token=token,
+            factory=Factory(self._process_context, logger),
         )
 
     @property

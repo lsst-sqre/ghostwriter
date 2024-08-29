@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from safir.slack.webhook import SlackWebhookClient
 from structlog.stdlib import BoundLogger
 
-from .config import config
+from .dependencies.config import config_dependency
 
 __all__ = ["Factory", "ProcessContext"]
 
@@ -26,9 +26,6 @@ class ProcessContext:
 
     Attributes
     ----------
-    http_client
-        Shared HTTP client.
-
     base_url
         Base URL for the application; read from config.
 
@@ -37,15 +34,15 @@ class ProcessContext:
     """
 
     def __init__(self, http_client: AsyncClient) -> None:
-        self.http_client = http_client
         self.logger = structlog.get_logger("ghostwriter")
-        self.base_url = config.environment_url
+        self.config = config_dependency.config
+        self.base_url = self.config.environment_url
         self.reload_map()
 
     def reload_map(self) -> None:
-        if config.mapping_file is None:
+        if self.config.mapping_file is None:
             raise RuntimeError("Cannot proceed without mapping file")
-        with config.mapping_file.open() as fp:
+        with self.config.mapping_file.open() as fp:
             self.mapping = yaml.safe_load(fp)
 
     async def aclose(self) -> None:
@@ -76,13 +73,11 @@ class Factory:
         self,
         context: ProcessContext,
         logger: BoundLogger | None = None,
-        user: str | None = None,
     ) -> None:
         self.context = context
         self._logger = (
             logger if logger else structlog.get_logger("ghostwriter")
         )
-        self._user = user
 
     def create_slack_webhook_client(self) -> SlackWebhookClient | None:
         """Create a Slack webhook client if configured for Slack alerting.
@@ -93,10 +88,10 @@ class Factory:
             Newly-created Slack client, or `None` if Slack alerting is not
             configured.
         """
-        if not config.alert_hook:
+        if not self.context.config.alert_hook:
             return None
         return SlackWebhookClient(
-            str(config.alert_hook), "Ghostwriter", self._logger
+            str(self.context.config.alert_hook), "Ghostwriter", self._logger
         )
 
     def set_logger(self, logger: BoundLogger) -> None:

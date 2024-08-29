@@ -87,6 +87,7 @@ asyncio_mode = "strict"
 # with complex data structures rather than only the assert message) in files
 # listed in python_files.
 python_files = ["tests/*.py", "tests/*/*.py"]
+asyncio_default_fixture_loop_scope = "session"
 
 # Use the generic Ruff configuration in ruff.toml and extend it with only
 # project-specific settings. Add a [tool.ruff.lint.extend-per-file-ignores]

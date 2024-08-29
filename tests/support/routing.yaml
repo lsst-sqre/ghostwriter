@@ -1,0 +1,3 @@
+routes:
+- source_prefix: "/tutorials/"
+  target: "${base_url}/nb/user/${user}/lab/tree/${path}.ipynb"

@@ -8,7 +8,8 @@ from safir.dependencies.logger import logger_dependency
 from safir.metadata import get_metadata
 from structlog.stdlib import BoundLogger
 
-from ..config import config
+from ..config import Configuration
+from ..dependencies.config import config_dependency
 from ..dependencies.context import RequestContext, context_dependency
 from ..models.index import Index
 from ..models.substitution import Parameters
@@ -31,6 +32,7 @@ external_router = APIRouter()
 )
 async def get_index(
     logger: Annotated[BoundLogger, Depends(logger_dependency)],
+    config: Annotated[Configuration, Depends(config_dependency)],
 ) -> Index:
     """GET ``/ghostwriter/`` (the app's external root).
 
@@ -75,6 +77,7 @@ async def rewrite(
 ) -> RedirectResponse:
     params = Parameters(
         user=context.user,
+        token=context.token,
         base_url=str(context.factory.context.base_url),
         path=full_path,
     )

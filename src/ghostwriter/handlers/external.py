@@ -58,7 +58,7 @@ async def get_index(
 
 
 @external_router.api_route(
-    "/ghostwriter/rewrite/{full_path:path}",
+    "/rewrite/{full_path:path}",
     methods=[
         "GET",
         "PUT",

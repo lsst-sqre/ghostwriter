@@ -6,6 +6,7 @@
 #
 # After editing, update requirements/main.txt by running:
 #     make update-deps
+# (make-update-deps-no-hashes while we're using an unreleased RSP client)
 
 # These dependencies are for fastapi including some optional features.
 fastapi
@@ -18,3 +19,8 @@ pydantic-settings
 safir>=5
 
 PyYAML
+
+# This will eventually get pulled into Safir
+rsp-jupyter-client@git+https://github.com/lsst-sqre/rsp-jupyter-client@main
+# Apparently git-fetched dependencies don't get transitive dependencies?
+httpx_sse

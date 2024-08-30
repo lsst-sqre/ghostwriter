@@ -8,6 +8,7 @@ from safir.slack.webhook import SlackWebhookClient
 from structlog.stdlib import BoundLogger
 
 from .dependencies.config import config_dependency
+from .storage.gafaelfawr import GafaelfawrManager
 
 __all__ = ["Factory", "ProcessContext"]
 
@@ -23,14 +24,23 @@ class ProcessContext:
     base_url
         Base URL for the application; read from config.
 
+    config
+        Application config.
+
     mapping
         Rewrite mapping; read from file specified in config.
+
+    gafaelfawr_manager
+        Cache for token-to-user-and-capability mappings.
     """
 
     def __init__(self) -> None:
         self.logger = structlog.get_logger("ghostwriter")
         self.config = config_dependency.config
         self.base_url = self.config.environment_url
+        if self.base_url is None:
+            raise RuntimeError("config.environent_url must be set")
+        self.gafaelfawr_manager = GafaelfawrManager(base_url=self.base_url)
         self.reload_map()
 
     def reload_map(self) -> None:

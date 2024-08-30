@@ -3,17 +3,20 @@
 This dependency gathers a variety of information into a single object for the
 convenience of writing request handlers.  It also provides a place to store a
 `structlog.BoundLogger` that can gather additional context during processing,
-including from dependencies.
+including from dependencies, and provides a token-specific HTTP client for the
+RSP, which in addition to functioning as a normal HTTP client is able to
+execute Python inside the context of a user notebook session, which is needed
+for some hooks.
 """
 
+import datetime
 from dataclasses import dataclass
 from typing import Annotated, Any
 
-import httpx
 from fastapi import Depends, Request
+from rsp_jupyter_client import RSPJupyterClient
 from safir.dependencies.gafaelfawr import (
     auth_delegated_token_dependency,
-    auth_dependency,
     auth_logger_dependency,
 )
 from structlog.stdlib import BoundLogger
@@ -47,8 +50,8 @@ class RequestContext:
     token: str
     """Token corresponding to authenticated user."""
 
-    http_client: httpx.AsyncClient
-    """HTTP Client initialized with correct token."""
+    rsp_client: RSPJupyterClient
+    """RSP Client initialized with correct token."""
 
     def rebind_logger(self, **values: Any) -> None:
         """Add the given values to the logging context.
@@ -73,38 +76,33 @@ class ContextDependency:
 
     def __init__(self) -> None:
         self._process_context: ProcessContext | None = None
-        self._client_cache: dict[str, httpx.AsyncClient] = {}
+        self._client_cache: dict[str, RSPJupyterClient] = {}
 
     async def __call__(
         self,
         request: Request,
         logger: Annotated[BoundLogger, Depends(auth_logger_dependency)],
-        user: Annotated[str, Depends(auth_dependency)],
         token: Annotated[str, Depends(auth_delegated_token_dependency)],
     ) -> RequestContext:
         """Create a per-request context."""
-        if not self._process_context:
-            raise RuntimeError("ContextDependency not initialized")
+        pc = self.process_context
         if token not in self._client_cache:
-            headers = {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            }
-            self._client_cache[token] = httpx.AsyncClient(
-                timeout=HTTP_TIMEOUT,
-                follow_redirects=True,
-                headers=headers,
-                base_url=str(self._process_context.base_url),
+            user = await pc.gafaelfawr_manager.get_user(token)
+            self._client_cache[token] = RSPJupyterClient(
+                logger=logger,
+                timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
+                user=user,
+                base_url=str(pc.base_url),
             )
-        http_client = self._client_cache[token]
+        rsp_client = self._client_cache[token]
 
         return RequestContext(
             request=request,
             logger=logger,
-            user=user,
+            user=user.username,
             token=token,
-            http_client=http_client,
-            factory=Factory(self._process_context, logger),
+            rsp_client=rsp_client,
+            factory=Factory(pc, logger),
         )
 
     @property
@@ -124,7 +122,7 @@ class ContextDependency:
         # Remove all our cached HTTP clients
         del_cli: list[str] = []  # Don't modify dict while looping over it.
         for tok in self._client_cache:
-            await self._client_cache[tok].aclose()
+            await self._client_cache[tok].close()
             del_cli.append(tok)
         for tok in del_cli:
             del self._client_cache[tok]

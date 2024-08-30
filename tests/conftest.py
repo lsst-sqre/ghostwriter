@@ -2,33 +2,32 @@
 
 from __future__ import annotations
 
+import json
 import os
 from collections.abc import AsyncIterator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import pytest_asyncio
+import respx
 import yaml
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-import ghostwriter
 from ghostwriter.config import Configuration
+from ghostwriter.dependencies.context import context_dependency
 from ghostwriter.main import create_app
+
+from .support.gafaelfawr import (
+    GafaelfawrUserInfo,
+    MockGafaelfawr,
+    register_mock_gafaelfawr,
+)
 
 
 @pytest_asyncio.fixture(scope="session")
-async def app() -> AsyncIterator[FastAPI]:
-    """Return a configured test application.
-
-    Writes configuration to a file within a session-scoped temporary
-    directory and patches it to find its routing file there, then
-    changes GHOSTWRITER_CONFIGURATION_PATH to point there.
-
-    Wraps the application in a lifespan manager so that startup and
-    shutdown events are sent during test execution.
-    """
+async def test_env() -> AsyncIterator[Path]:
     with TemporaryDirectory() as td:
         fake_root = Path(td)
 
@@ -46,17 +45,59 @@ async def app() -> AsyncIterator[FastAPI]:
         newconfig = output_dir / "config.yaml"
         newconfig.write_text(config_yaml)
 
-        os.environ["GHOSTWRITER_CONFIGURATION_PATH"] = str(newconfig)
-
-        gw_app = create_app()
-        async with LifespanManager(gw_app):
-            yield gw_app
+        yield newconfig
 
 
 @pytest_asyncio.fixture(scope="session")
-async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+async def config(test_env: Path) -> AsyncIterator[Configuration]:
+    with test_env.open() as f:
+        newconfig = Configuration.model_validate(yaml.safe_load(f))
+    yield newconfig
+
+
+@pytest_asyncio.fixture
+def mock_gafaelfawr(
+    respx_mock: respx.Router, config: Configuration
+) -> MockGafaelfawr:
+    user_objs = json.loads(
+        (Path(__file__).parent / "support" / "users.json").read_text()
+    )
+    users = {
+        t: GafaelfawrUserInfo.model_validate(u) for t, u in user_objs.items()
+    }
+
+    return register_mock_gafaelfawr(
+        respx_mock,
+        str(config.environment_url),
+        users,
+    )
+
+
+@pytest_asyncio.fixture
+async def app(
+    test_env: Path, mock_gafaelfawr: MockGafaelfawr
+) -> AsyncIterator[FastAPI]:
+    """Return a configured test application.
+
+    Writes configuration to a file within a session-scoped temporary
+    directory and patches it to find its routing file there, then
+    changes GHOSTWRITER_CONFIGURATION_PATH to point there.
+
+    Wraps the application in a lifespan manager so that startup and
+    shutdown events are sent during test execution.
+    """
+    os.environ["GHOSTWRITER_CONFIGURATION_PATH"] = str(test_env)
+    gw_app = create_app()
+    await context_dependency.initialize()
+    async with LifespanManager(gw_app):
+        yield gw_app
+
+
+@pytest_asyncio.fixture
+async def client(
+    app: FastAPI, config: Configuration
+) -> AsyncIterator[AsyncClient]:
     """Return an ``httpx.AsyncClient`` configured to talk to the test app."""
-    config = ghostwriter.dependencies.config.config_dependency.config
     async with AsyncClient(
         transport=ASGITransport(app=app),
         # Pydantic URLs and HTTPx URLs aren't the same thing, but it will

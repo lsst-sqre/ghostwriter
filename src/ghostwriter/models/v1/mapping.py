@@ -5,6 +5,7 @@ to be rewritten.
 
 from __future__ import annotations
 
+import dataclasses
 from collections.abc import Awaitable, Callable
 from string import Template
 from typing import Annotated
@@ -92,7 +93,7 @@ class MapRule(BaseModel):
                 await hook(params)
         except Exception as exc:
             raise HookError(
-                f"Hook {hook} with parameters {params} failed"
+                f"Hook {hook} with parameters {params} failed: {exc}"
             ) from exc
 
     async def resolve(self, params: Parameters) -> str:
@@ -104,15 +105,16 @@ class MapRule(BaseModel):
             )
         await self.run_hooks(params=params)
         tmpl = Template(self.target)
-        mapping = params.to_dict()
+        mapping = dataclasses.asdict(params)
         full_path = mapping["path"]
         # Strip matched path
         mapping["path"] = full_path[(len(self.source_prefix) - 1) :]
         try:
-            return tmpl.substitute(mapping=mapping)
+            return tmpl.substitute(mapping)
         except Exception as exc:
             raise ResolutionError(
-                f"Resolving {self.target} with parameters {params} failed"
+                f"Resolving {self.target} with parameters {params}"
+                f" failed: {exc}"
             ) from exc
 
 

@@ -11,12 +11,3 @@ class Parameters:
     base_url: str
     path: str
     token: str
-
-    def to_dict(self) -> dict[str, str]:
-        """Produce dictionary representation of parameters."""
-        return {
-            "user": self.user,
-            "base_url": self.base_url,
-            "path": self.path,
-            "token": self.token,
-        }

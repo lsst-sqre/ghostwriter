@@ -17,6 +17,7 @@ mypy
 pytest
 pytest-asyncio
 pytest-cov
+respx
 
 # Typing
 types-PyYAML

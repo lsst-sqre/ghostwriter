@@ -58,6 +58,9 @@ def create_app(*, load_config: bool = True) -> FastAPI:
         )
         configure_uvicorn_logging(config.log_level)
 
+    logger = structlog.get_logger("ghostwriter")
+    logger.debug("Created logger")
+
     # Create the application object.
     path_prefix = config.path_prefix if load_config else "/ghostwriter"
     app = FastAPI(
@@ -70,22 +73,28 @@ def create_app(*, load_config: bool = True) -> FastAPI:
         lifespan=lifespan,
     )
 
+    logger.debug("Created FastAPI app")
+
     # Attach the main controller routers.
     app.include_router(internal_router)
     app.include_router(external_router, prefix=f"{config.path_prefix}")
 
+    logger.debug("Attached app routers")
+
     # Register middleware.
     app.add_middleware(XForwardedMiddleware)
+
+    logger.debug("Registered middleware")
 
     # Configure Slack alerts.
     if load_config and config.alert_hook:
         webhook = str(config.alert_hook)
-        logger = structlog.get_logger("ghostwriter")
         SlackRouteErrorHandler.initialize(webhook, config.name, logger)
         logger.debug("Initialized Slack alert webhook")
 
     # Configure exception handlers.
     app.exception_handler(ClientRequestError)(client_request_error_handler)
+    logger.debug("Configured exception handlers")
 
     return app
 

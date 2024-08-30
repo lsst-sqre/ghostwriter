@@ -85,18 +85,22 @@ class ContextDependency:
         token: Annotated[str, Depends(auth_delegated_token_dependency)],
     ) -> RequestContext:
         """Create a per-request context."""
+        logger.debug("Creating request context.")
         pc = self.process_context
         if token not in self._client_cache:
+            logger.debug("Creating new RSPJupyterClient")
             user = await pc.gafaelfawr_manager.get_user(token)
+            logger.debug(f"Resolved user {user.username} from token")
             self._client_cache[token] = RSPJupyterClient(
                 logger=logger,
                 timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
                 user=user,
                 base_url=str(pc.base_url),
             )
+            logger.debug(f"Built RSPJupyterClient for user {user.username}")
         rsp_client = self._client_cache[token]
 
-        return RequestContext(
+        rc = RequestContext(
             request=request,
             logger=logger,
             user=user.username,
@@ -104,6 +108,11 @@ class ContextDependency:
             rsp_client=rsp_client,
             factory=Factory(pc, logger),
         )
+
+        logger.debug(
+            f"Created request context for {request} by {user.username}"
+        )
+        return rc
 
     @property
     def process_context(self) -> ProcessContext:

@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path, Request
 from fastapi.responses import RedirectResponse
 from safir.dependencies.logger import logger_dependency
 from safir.metadata import get_metadata
@@ -57,24 +57,14 @@ async def get_index(
     return Index(metadata=metadata)
 
 
-@external_router.api_route(
-    "/rewrite/{full_path:path}",
-    methods=[
-        "GET",
-        "PUT",
-        "POST",
-        "DELETE",
-        "PATCH",
-        "HEAD",
-        "CONNECT",
-        "OPTIONS",
-        "TRACE",
-    ],
-)
+@external_router.api_route("/rewrite/{full_path:path}")
 async def rewrite(
-    full_path: str,
+    full_path: Annotated[str, Path(title="The URL path to rewrite")],
+    request: Request,
+    logger: Annotated[BoundLogger, Depends(logger_dependency)],
     context: Annotated[RequestContext, Depends(context_dependency)],
 ) -> RedirectResponse:
+    logger.debug(f"Request for rewrite: {full_path} [{request.method}]")
     params = Parameters(
         user=context.user,
         token=context.token,

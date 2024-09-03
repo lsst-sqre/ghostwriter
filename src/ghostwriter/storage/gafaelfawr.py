@@ -3,9 +3,9 @@ Gafaelfawr user for use in the per-request http client, and maintain a cache
 of those objects.
 """
 
-from httpx import AsyncClient
 from pydantic import HttpUrl
 from rsp_jupyter_client.models.user import AuthenticatedUser
+from safir.dependencies.http_client import http_client_dependency
 
 
 class GafaelfawrManager:
@@ -15,21 +15,26 @@ class GafaelfawrManager:
 
     def __init__(self, base_url: HttpUrl) -> None:
         self._user_cache: dict[str, AuthenticatedUser] = {}
-        self._client = AsyncClient(
-            base_url=str(base_url),
-            headers={"Content-Type": "application/json"},
-            follow_redirects=True,
-        )
 
     async def get_user(self, token: str) -> AuthenticatedUser:
         if token in self._user_cache:
             return self._user_cache[token]
         # We need fields from two calls.
-        self._client.headers["Authorization"] = f"Bearer {token}"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
         api = "/auth/api/v1"
-        token_info = (await self._client.get(f"{api}/token-info")).json()
-        user_info = (await self._client.get(f"{api}/user-info")).json()
-        del self._client.headers["Authorization"]
+        client = await http_client_dependency()
+        token_info = (
+            await client.get(f"{api}/token-info", headers=headers)
+        ).json()
+        user_info = (
+            await client.get(
+                f"{api}/user-info",
+                headers=headers,
+            )
+        ).json()
         user = AuthenticatedUser(
             username=user_info["username"],
             uidnumber=user_info["uid"],

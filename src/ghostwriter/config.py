@@ -87,7 +87,7 @@ class Configuration(BaseSettings):
             title="Application logging profile",
             validation_alias="GHOSTWRITER_LOGGING_PROFILE",
         ),
-    ] = Profile.development
+    ] = Profile.production
 
     log_level: Annotated[
         LogLevel,
@@ -98,6 +98,7 @@ class Configuration(BaseSettings):
     ] = LogLevel.INFO
 
     model_config = SettingsConfigDict(populate_by_name=True)
+    model_config["env_ignore_empty"] = True
 
     def to_yaml(self) -> str:
         """Produce a YAML document we could use for from_file.  Fortunately,
@@ -115,4 +116,7 @@ class Configuration(BaseSettings):
             Path to the configuration file.
         """
         with path.open("r") as f:
-            return cls.model_validate(yaml.safe_load(f))
+            obj = yaml.safe_load(f)
+            if obj is None:
+                obj = {}
+            return cls.model_validate(obj)

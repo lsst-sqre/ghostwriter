@@ -8,6 +8,7 @@ possible via a PyPI library, these models are largely copied from Gafaelfawr.
 from __future__ import annotations
 
 import json
+from urllib.parse import urljoin
 
 import respx
 from httpx import Request, Response
@@ -263,8 +264,8 @@ def register_mock_gafaelfawr(
         Mock Gafaelfawr API object.
     """
     mock = MockGafaelfawr(tokens)
-    user_url = f"{base_url}/auth/api/v1/user-info"
-    token_url = f"{base_url}/auth/api/v1/token-info"
+    user_url = urljoin(base_url, "/auth/api/v1/user-info")
+    token_url = urljoin(base_url, "/auth/api/v1/token-info")
     respx_mock.get(user_url).mock(side_effect=mock.get_info)
     respx_mock.get(token_url).mock(side_effect=mock.get_token)
     return mock

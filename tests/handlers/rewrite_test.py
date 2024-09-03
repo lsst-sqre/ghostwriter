@@ -10,7 +10,7 @@ from ..support.gafaelfawr import MockGafaelfawr
 
 
 @pytest.mark.asyncio
-async def test_get_index(
+async def test_rewrite(
     client: AsyncClient, mock_gafaelfawr: MockGafaelfawr
 ) -> None:
     """Test ``GET /ghostwriter/rewrite``."""

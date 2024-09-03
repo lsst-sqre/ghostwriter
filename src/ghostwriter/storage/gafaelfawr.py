@@ -3,6 +3,8 @@ Gafaelfawr user for use in the per-request http client, and maintain a cache
 of those objects.
 """
 
+from urllib.parse import urljoin
+
 from pydantic import HttpUrl
 from rsp_jupyter_client.models.user import AuthenticatedUser
 from safir.dependencies.http_client import http_client_dependency
@@ -14,6 +16,7 @@ class GafaelfawrManager:
     """
 
     def __init__(self, base_url: HttpUrl) -> None:
+        self._base_url = base_url
         self._user_cache: dict[str, AuthenticatedUser] = {}
 
     async def get_user(self, token: str) -> AuthenticatedUser:
@@ -24,7 +27,7 @@ class GafaelfawrManager:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",
         }
-        api = "/auth/api/v1"
+        api = urljoin(str(self._base_url), "/auth/api/v1")
         client = await http_client_dependency()
         token_info = (
             await client.get(f"{api}/token-info", headers=headers)

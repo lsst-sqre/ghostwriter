@@ -8,6 +8,7 @@ from safir.slack.webhook import SlackWebhookClient
 from structlog.stdlib import BoundLogger
 
 from .dependencies.config import config_dependency
+from .models.v1.mapping import RouteMap
 from .storage.gafaelfawr import GafaelfawrManager
 
 __all__ = ["Factory", "ProcessContext"]
@@ -47,7 +48,8 @@ class ProcessContext:
         if self.config.mapping_file is None:
             raise RuntimeError("Cannot proceed without mapping file")
         with self.config.mapping_file.open() as fp:
-            self.mapping = yaml.safe_load(fp)
+            map_obj = yaml.safe_load(fp)
+            self.mapping = RouteMap.model_validate(map_obj)
 
     async def aclose(self) -> None:
         """Clean up a process context.

@@ -103,7 +103,7 @@ class ContextDependency:
         rc = RequestContext(
             request=request,
             logger=logger,
-            user=user.username,
+            user=rsp_client.user.username,
             token=token,
             rsp_client=rsp_client,
             factory=Factory(pc, logger),

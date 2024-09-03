@@ -110,7 +110,8 @@ class ContextDependency:
         )
 
         logger.debug(
-            f"Created request context for {request} by {user.username}"
+            f"Created request context for {request} by"
+            f" {rsp_client.user.username}"
         )
         return rc
 

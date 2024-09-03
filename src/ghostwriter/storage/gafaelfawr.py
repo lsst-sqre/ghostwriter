@@ -20,30 +20,29 @@ class GafaelfawrManager:
         self._user_cache: dict[str, AuthenticatedUser] = {}
 
     async def get_user(self, token: str) -> AuthenticatedUser:
-        if token in self._user_cache:
-            return self._user_cache[token]
-        # We need fields from two calls.
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {token}",
-        }
-        api = urljoin(str(self._base_url), "/auth/api/v1")
-        client = await http_client_dependency()
-        token_info = (
-            await client.get(f"{api}/token-info", headers=headers)
-        ).json()
-        user_info = (
-            await client.get(
-                f"{api}/user-info",
-                headers=headers,
+        if token not in self._user_cache:
+            # We need fields from two calls.
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token}",
+            }
+            api = urljoin(str(self._base_url), "/auth/api/v1")
+            client = await http_client_dependency()
+            token_info = (
+                await client.get(f"{api}/token-info", headers=headers)
+            ).json()
+            user_info = (
+                await client.get(
+                    f"{api}/user-info",
+                    headers=headers,
+                )
+            ).json()
+            user = AuthenticatedUser(
+                username=user_info["username"],
+                uidnumber=user_info["uid"],
+                gidnumber=user_info["gid"],
+                scopes=token_info["scopes"],
+                token=token,
             )
-        ).json()
-        user = AuthenticatedUser(
-            username=user_info["username"],
-            uidnumber=user_info["uid"],
-            gidnumber=user_info["gid"],
-            scopes=token_info["scopes"],
-            token=token,
-        )
-        self._user_cache[token] = user
-        return user
+            self._user_cache[token] = user
+        return self._user_cache[token]

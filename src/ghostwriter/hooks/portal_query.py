@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 
 import structlog
 
+from ..exceptions import HookError
 from ..models.substitution import Parameters
 
 
@@ -24,13 +25,20 @@ async def portal_query(params: Parameters) -> None:
     await rsp_client.auth_to_hub()
     logger.debug("Authenticating to lab")
     await rsp_client.auth_to_lab()
-    endpoint = str(
-        urljoin(params.base_url, f"/nb/user/{params.user}/rubin/query")
-    )
-    logger.debug(f"Sending POST to {endpoint}")
-    xsrf = rsp_client.lab_xsrf
-    headers = {"Content-Type": "application/json"}
-    if xsrf:
-        headers["X-XSRFToken"] = xsrf
-    await http_client.post(endpoint, json=body, headers=headers)
-    logger.debug("Continuing to redirect")
+    logger.debug("Checking whether query notebook already exists")
+    u_ep = str(urljoin(params.base_url, f"/nb/user/{params.user}"))
+    nb_ep = f"{u_ep}/api/contents/notebooks/queries/portal_{q_id}.ipynb"
+    resp = await http_client.get(nb_ep)
+    if resp.status_code == 200:
+        logger.debug(f"Notebook for query {q_id} exists.")
+    else:
+        endpoint = f"{u_ep}/rubin/query"
+        logger.debug(f"Sending POST to {endpoint}")
+        xsrf = rsp_client.lab_xsrf
+        headers = {"Content-Type": "application/json"}
+        if xsrf:
+            headers["X-XSRFToken"] = xsrf
+        resp = await http_client.post(endpoint, json=body, headers=headers)
+        if resp.status_code >= 400:
+            raise HookError(f"POST to {endpoint} failed: {resp}")
+        logger.debug("Continuing to redirect")

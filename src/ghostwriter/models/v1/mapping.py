@@ -10,15 +10,52 @@ from collections.abc import Awaitable, Callable
 from string import Template
 from typing import Annotated
 
-from pydantic import AfterValidator, BaseModel, Field
+import structlog
+from pydantic import AfterValidator, BaseModel, BeforeValidator, Field
 
-from ...exceptions import HookError, MatchNotFoundError, ResolutionError
+from ... import hooks
+from ...exceptions import (
+    HookError,
+    HookNotFoundError,
+    MatchNotFoundError,
+    ResolutionError,
+)
 from ..substitution import Parameters
+
+LOGGER = structlog.get_logger("ghostwriter")
 
 
 def canonicalize_source_route(v: str) -> str:
     """Force source route to have one leading and one trailing slash."""
     return f"/{v.strip('/')}/"
+
+
+def resolve_hooks(
+    v: list[str] | list[Callable[[Parameters], Awaitable[None]]],
+) -> list[Callable[[Parameters], Awaitable[None]]]:
+    """Hooks will be listed as strings in the config file.  This loads
+    the corresponding functions.
+    """
+    retval: list[Callable[[Parameters], Awaitable[None]]] = []
+    for hook in v:
+        LOGGER.debug(f"Attempting to load hook {hook}")
+        if callable(hook):
+            retval.append(hook)
+            continue
+        if not isinstance(hook, str):
+            raise HookNotFoundError(f"Hook {hook} could not be loaded")
+        if hook.startswith("ghostwriter.hooks."):
+            hookname = hook[len("ghostwriter.hooks.") :]
+        else:
+            hookname = hook
+        try:
+            obj = getattr(hooks, hookname)
+        except AttributeError as exc:
+            raise HookNotFoundError(
+                f"Hook {hook} could not be loaded: {exc}"
+            ) from exc
+        retval.append(obj)
+    return retval
 
 
 class MapRule(BaseModel):
@@ -70,6 +107,7 @@ class MapRule(BaseModel):
                 " returning the URL pointing to it."
             ),
         ),
+        BeforeValidator(resolve_hooks),
     ] = None
 
     skip_hooks: Annotated[
@@ -90,6 +128,7 @@ class MapRule(BaseModel):
             return
         try:
             for hook in self.hooks:
+                LOGGER.debug(f"Running hook {hook.__name__} with {params}")
                 await hook(params)
         except Exception as exc:
             raise HookError(

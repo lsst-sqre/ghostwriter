@@ -34,7 +34,7 @@ tox==4.18.0
     #   tox-uv
 tox-uv==1.11.2
     # via -r requirements/tox.in
-uv==0.4.4
+uv==0.4.5
     # via tox-uv
 virtualenv==20.26.3
     # via tox

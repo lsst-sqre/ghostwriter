@@ -28,5 +28,9 @@ async def portal_query(params: Parameters) -> None:
         urljoin(params.base_url, f"/nb/user/{params.user}/rubin/query")
     )
     logger.debug(f"Sending POST to {endpoint}")
-    await http_client.post(endpoint, json=body)
+    xsrf = rsp_client.lab_xsrf
+    headers = {"Content-Type": "application/json"}
+    if xsrf:
+        headers["X-XSRFToken"] = xsrf
+    await http_client.post(endpoint, json=body, headers=headers)
     logger.debug("Continuing to redirect")

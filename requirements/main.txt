@@ -67,7 +67,7 @@ pyyaml==6.0.2
     # via
     #   -r requirements/main.in
     #   uvicorn
-rsp-jupyter-client @ git+https://github.com/lsst-sqre/rsp-jupyter-client@6c61a5b31288d8597fa7d2cd49f7f2624850b0c7
+rsp-jupyter-client @ git+https://github.com/lsst-sqre/rsp-jupyter-client@383485341d08bf7afb3986f0661a4f15241ffac8
     # via -r requirements/main.in
 safir==6.3.0
     # via -r requirements/main.in

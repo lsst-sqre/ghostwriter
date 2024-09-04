@@ -17,7 +17,7 @@ SPAWN_TIMEOUT = 90
 async def ensure_running_lab(params: Parameters) -> None:
     """Start a Lab if one is not present."""
     logger = structlog.get_logger("ghostwriter")
-    logger.debug("Checking for running Lab for {params}")
+    logger.debug(f"Checking for running Lab for {params}")
     client = params.client
     logger.debug("Logging in to Hub")
     await client.auth_to_hub()

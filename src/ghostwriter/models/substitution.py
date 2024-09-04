@@ -20,7 +20,7 @@ class Parameters:
     def __str__(self) -> str:
         return (
             f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'"
-            f" Path: '{self.path}'; Token and RSP client <redacted>."
+            f" Path: '{self.path}'; Token and RSP client <redacted>]"
         )
 
     def rewrite_mapping(self) -> dict[str, str]:

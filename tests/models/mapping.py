@@ -1,7 +1,10 @@
 """Test mapping model."""
 
 import pytest
+import structlog
 import yaml
+from rsp_jupyter_client import RSPJupyterClient
+from rsp_jupyter_client.models.user import AuthenticatedUser
 
 from ghostwriter.config import Configuration
 from ghostwriter.models.substitution import Parameters
@@ -21,6 +24,17 @@ async def test_mapping(config: Configuration) -> None:
         token="token-of-affection",
         path="tutorials/notebook05",
         base_url="https://data.example.com",
+        client=RSPJupyterClient(
+            user=AuthenticatedUser(
+                username="rachel",
+                uidnumber=1101,
+                gidnumber=1101,
+                scopes=["exec:notebook", "read:tap", "exec:portal"],
+                token="token-of-affection",
+            ),
+            base_url="https://data.example.com",
+            logger=structlog.get_logger("ghostwriter"),
+        ),
     )
     res = await routemap.resolve(params)
     assert res == (

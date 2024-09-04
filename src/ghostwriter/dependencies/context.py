@@ -9,7 +9,6 @@ execute Python inside the context of a user notebook session, which is needed
 for some hooks.
 """
 
-import datetime
 from dataclasses import dataclass
 from typing import Annotated, Any
 
@@ -21,7 +20,6 @@ from safir.dependencies.gafaelfawr import (
 )
 from structlog.stdlib import BoundLogger
 
-from ..constants import HTTP_TIMEOUT
 from ..factory import Factory, ProcessContext
 
 __all__ = [
@@ -76,7 +74,6 @@ class ContextDependency:
 
     def __init__(self) -> None:
         self._process_context: ProcessContext | None = None
-        self._client_cache: dict[str, RSPJupyterClient] = {}
 
     async def __call__(
         self,
@@ -87,18 +84,7 @@ class ContextDependency:
         """Create a per-request context."""
         logger.debug("Creating request context.")
         pc = self.process_context
-        if token not in self._client_cache:
-            logger.debug("Creating new RSPJupyterClient")
-            user = await pc.gafaelfawr_manager.get_user(token)
-            logger.debug(f"Resolved user {user.username} from token")
-            self._client_cache[token] = RSPJupyterClient(
-                logger=logger,
-                timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
-                user=user,
-                base_url=str(pc.base_url),
-            )
-            logger.debug(f"Built RSPJupyterClient for user {user.username}")
-        rsp_client = self._client_cache[token]
+        rsp_client = await pc.rsp_client_manager.get_client(token)
 
         rc = RequestContext(
             request=request,
@@ -129,13 +115,6 @@ class ContextDependency:
 
     async def aclose(self) -> None:
         """Clean up the per-process configuration."""
-        # Remove all our cached HTTP clients
-        del_cli: list[str] = []  # Don't modify dict while looping over it.
-        for tok in self._client_cache:
-            await self._client_cache[tok].close()
-            del_cli.append(tok)
-        for tok in del_cli:
-            del self._client_cache[tok]
         if self._process_context:
             await self._process_context.aclose()
         self._process_context = None

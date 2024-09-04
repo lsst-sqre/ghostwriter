@@ -68,6 +68,7 @@ async def rewrite(
     params = Parameters(
         user=context.user,
         token=context.token,
+        client=context.rsp_client,
         base_url=str(context.factory.context.base_url),
         path=full_path,
     )

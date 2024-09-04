@@ -5,12 +5,10 @@ to be rewritten.
 
 from __future__ import annotations
 
-import dataclasses
 from collections.abc import Awaitable, Callable
 from string import Template
 from typing import Annotated
 
-import structlog
 from pydantic import AfterValidator, BaseModel, BeforeValidator, Field
 
 from ... import hooks
@@ -21,8 +19,6 @@ from ...exceptions import (
     ResolutionError,
 )
 from ..substitution import Parameters
-
-LOGGER = structlog.get_logger("ghostwriter")
 
 
 def canonicalize_source_route(v: str) -> str:
@@ -38,7 +34,6 @@ def resolve_hooks(
     """
     retval: list[Callable[[Parameters], Awaitable[None]]] = []
     for hook in v:
-        LOGGER.debug(f"Attempting to load hook {hook}")
         if callable(hook):
             retval.append(hook)
             continue
@@ -52,7 +47,7 @@ def resolve_hooks(
             obj = getattr(hooks, hookname)
         except AttributeError as exc:
             raise HookNotFoundError(
-                f"Hook {hook} could not be loaded: {exc}"
+                f"Hookname {hook} could not be loaded: {exc}"
             ) from exc
         retval.append(obj)
     return retval
@@ -128,7 +123,6 @@ class MapRule(BaseModel):
             return
         try:
             for hook in self.hooks:
-                LOGGER.debug(f"Running hook {hook.__name__} with {params}")
                 await hook(params)
         except Exception as exc:
             raise HookError(
@@ -144,7 +138,7 @@ class MapRule(BaseModel):
             )
         await self.run_hooks(params=params)
         tmpl = Template(self.target)
-        mapping = dataclasses.asdict(params)
+        mapping = params.rewrite_mapping()
         full_path = mapping["path"]
         # Strip matched path
         mapping["path"] = full_path[(len(self.source_prefix) - 1) :]

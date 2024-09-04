@@ -9,6 +9,7 @@ from structlog.stdlib import BoundLogger
 
 from .dependencies.config import config_dependency
 from .models.v1.mapping import RouteMap
+from .services.rsp_client_manager import RSPClientManager
 from .storage.gafaelfawr import GafaelfawrManager
 
 __all__ = ["Factory", "ProcessContext"]
@@ -33,6 +34,9 @@ class ProcessContext:
 
     gafaelfawr_manager
         Cache for token-to-user-and-capability mappings.
+
+    rsp_client_manager
+        Cache for token-to-rsp-client mapping.
     """
 
     def __init__(self) -> None:
@@ -42,6 +46,11 @@ class ProcessContext:
         if self.base_url is None:
             raise RuntimeError("config.environent_url must be set")
         self.gafaelfawr_manager = GafaelfawrManager(base_url=self.base_url)
+        self.rsp_client_manager = RSPClientManager(
+            base_url=self.base_url,
+            logger=self.logger,
+            gafaelfawr_manager=self.gafaelfawr_manager,
+        )
         self.reload_map()
 
     def reload_map(self) -> None:
@@ -56,6 +65,7 @@ class ProcessContext:
 
         Called before shutdown to free resources.
         """
+        await self.rsp_client_manager.aclose()
 
 
 class Factory:

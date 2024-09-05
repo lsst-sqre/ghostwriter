@@ -20,7 +20,7 @@ safir>=5
 
 PyYAML
 
-# This will eventually get pulled into Safir
+# This will eventually get pulled into Nublado
 rsp-jupyter-client@git+https://github.com/lsst-sqre/rsp-jupyter-client@main
 # Apparently git-fetched dependencies don't get transitive dependencies?
 httpx_sse

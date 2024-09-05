@@ -23,4 +23,9 @@ respx
 types-PyYAML
 
 # Documentation
-scriv
+scriv[toml]
+
+autodoc_pydantic
+documenteer[guide]>1
+sphinx
+sphinxcontrib-redoc

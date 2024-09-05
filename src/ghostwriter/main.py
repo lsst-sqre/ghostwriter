@@ -19,7 +19,7 @@ from .dependencies.context import context_dependency
 from .handlers.external import external_router
 from .handlers.internal import internal_router
 
-__all__ = ["create_app"]
+__all__ = ["create_app", "create_openapi"]
 
 
 def create_app(*, load_config: bool = True) -> FastAPI:
@@ -74,10 +74,13 @@ def create_app(*, load_config: bool = True) -> FastAPI:
     )
 
     logger.debug("Created FastAPI app")
+    prefix = "/ghostwriter"
+    if load_config:
+        prefix = f"{config.path_prefix}"
 
     # Attach the main controller routers.
     app.include_router(internal_router)
-    app.include_router(external_router, prefix=f"{config.path_prefix}")
+    app.include_router(external_router, prefix=prefix)
 
     logger.debug("Attached app routers")
 

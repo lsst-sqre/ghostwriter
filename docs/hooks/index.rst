@@ -1,0 +1,57 @@
+#####
+Hooks
+#####
+
+Hooks are units of work carried out before the redirect for the user's browser is issued.
+
+There is a list of hooks (possibly empty) for each route specified in the configuration.
+
+Each hook is run in sequence.If any hook raises an exception, the user will receive an error rather than a redirect.
+
+Because (at present) hooks are, by definition, located inside the ``ghostwriter.hooks`` Python module namespace, any additions or modifications to hooks are code and repository changes.
+Therefore, any proposed hooks or modififactions to existing ones will need to go through the SQuaRE PR process.
+
+Anatomy of a Hook
+=================
+
+A hook is an ``async`` Python function that takes one argument, a ``ghostwriter.models.substitution.Parameters`` instance, and returns ``None``.
+
+To signal failure, a hook should raise an ``Exception``.
+
+That's the whole thing.
+
+Within those constraints, a hook can do whatever it likes.
+
+Parameters
+==========
+
+Obviously that begs the question of "what's in a ``Parameters`` object?"
+
+Three of the fields are obvious: they are ``base_url``, ``path``, and ``user``, all used in path construction for the redirect.
+
+Two are less obvious: ``token`` and ``client`` (strictly speaking, ``token`` is superfluous since it is very likely only be useful in the context of ``client``, which already knows it, and from which it could be extracted).
+
+The ``client`` field contains an RSP client loaded with the given token, which can be used directly (as ``mobu`` and ``noteburst`` do) to execute Python code (or whole notebooks) within Nublado.
+It can also be used as a generic (yet authenticated) HTTP client for the rest of a Phalanx environment, and thus can be used to talk to any other service, or to the API endpoints within a Lab environment.
+
+The token, from a `Gafaelfawr <https://gafaelfawr.lsst.io>`__ standpoint, is delegated with the ``notebook: {}`` parameter, meaning that it has identical powers to the token the user got from their initial login via Gafaelfawr.
+
+In effect, that means that the RSP client can perform complete impersonation of the user: anything that user could do inside a given Phalanx instance, a hook could do via its client.
+
+With great power comes great responsibility.
+
+Example
+=======
+
+The ``portal_query`` hook provides a moderately complex workflow.
+
+Note that it assumes a running Lab for the user.
+
+While this could easily be added to the hook, that workflow already exists as the ``ensure_running_lab`` hook, so it's more economical to simply list ``portal_query`` after ``ensure_running_lab`` in the list of hooks to run for the ``/queries/`` route.
+
+#. The query ID is extracted from the path.
+#. This is used to construct the portal query URL.
+#. The ``client`` authenticates to the Hub and Lab (since we've just run ``ensure_running_lab`` this step is likely superfluous, because it's quite unlikely we would have gotten deauthenticated in the meantime).
+#. The ``client`` uses the ``/api/contents`` endpoint to determine if the requested query notebook already exists, and returns immediately if it does.
+#. Otherwise, the ``client`` constructs the ``POST`` to request a templated notebook from the query ID.
+

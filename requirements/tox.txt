@@ -20,6 +20,7 @@ packaging==24.1
     #   tox-uv
 platformdirs==4.2.2
     # via
+    #   -c requirements/dev.txt
     #   tox
     #   virtualenv
 pluggy==1.5.0

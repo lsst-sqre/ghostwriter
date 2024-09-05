@@ -57,13 +57,15 @@ async def get_index(
     return Index(metadata=metadata)
 
 
-@external_router.api_route("/rewrite/{full_path:path}")
+@external_router.api_route(
+    "/rewrite/{full_path:path}", response_class=RedirectResponse
+)
 async def rewrite(
     full_path: Annotated[str, Path(title="The URL path to rewrite")],
     request: Request,
     logger: Annotated[BoundLogger, Depends(logger_dependency)],
     context: Annotated[RequestContext, Depends(context_dependency)],
-) -> RedirectResponse:
+) -> str:
     logger.debug(f"Request for rewrite: {full_path} [{request.method}]")
     params = Parameters(
         user=context.user,
@@ -73,5 +75,4 @@ async def rewrite(
         path=full_path,
     )
     mapping = context.factory.context.mapping
-    resolved = await mapping.resolve(params)
-    return RedirectResponse(resolved)
+    return await mapping.resolve(params)

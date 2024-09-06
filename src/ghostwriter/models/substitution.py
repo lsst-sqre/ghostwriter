@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from rsp_jupyter_client import RSPJupyterClient
+from rubin.nublado.client import NubladoClient
 
 
 @dataclass
@@ -15,7 +15,7 @@ class Parameters:
     base_url: str
     path: str
     token: str
-    client: RSPJupyterClient
+    client: NubladoClient
 
     def __str__(self) -> str:
         return (

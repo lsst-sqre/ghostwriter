@@ -3,8 +3,8 @@
 import pytest
 import structlog
 import yaml
-from rsp_jupyter_client import RSPJupyterClient
-from rsp_jupyter_client.models.user import AuthenticatedUser
+from rubin.nublado.client import NubladoClient
+from rubin.nublado.client.models.user import AuthenticatedUser
 
 from ghostwriter.config import Configuration
 from ghostwriter.models.substitution import Parameters
@@ -24,7 +24,7 @@ async def test_mapping(config: Configuration) -> None:
         token="token-of-affection",
         path="tutorials/notebook05",
         base_url="https://data.example.com",
-        client=RSPJupyterClient(
+        client=NubladoClient(
             user=AuthenticatedUser(
                 username="rachel",
                 uidnumber=1101,

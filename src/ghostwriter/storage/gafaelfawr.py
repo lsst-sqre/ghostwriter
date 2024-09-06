@@ -6,7 +6,7 @@ of those objects.
 from urllib.parse import urljoin
 
 from pydantic import HttpUrl
-from rsp_jupyter_client.models.user import AuthenticatedUser
+from rubin.nublado.client.models.user import AuthenticatedUser
 from safir.dependencies.http_client import http_client_dependency
 
 

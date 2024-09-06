@@ -16,15 +16,15 @@ async def portal_query(params: Parameters) -> None:
     """Create a portal query from a query ID."""
     logger = structlog.get_logger("ghostwriter")
     q_id = params.path.split("/")[-1]
-    rsp_client = params.client
-    http_client = rsp_client.http
+    client = params.client
+    http_client = client.http
     q_url = str(urljoin(params.base_url, f"/api/tap/async/{q_id}"))
     logger.debug(f"Portal query URL is {q_url}")
     body = {"type": "portal", "value": q_url}
     logger.debug(f"Logging in to hub as {params.user}")
-    await rsp_client.auth_to_hub()
+    await client.auth_to_hub()
     logger.debug("Authenticating to lab")
-    await rsp_client.auth_to_lab()
+    await client.auth_to_lab()
     logger.debug("Checking whether query notebook already exists")
     u_ep = str(urljoin(params.base_url, f"/nb/user/{params.user}"))
     nb_ep = f"{u_ep}/api/contents/notebooks/queries/portal_{q_id}.ipynb"
@@ -34,7 +34,7 @@ async def portal_query(params: Parameters) -> None:
     else:
         endpoint = f"{u_ep}/rubin/query"
         logger.debug(f"Sending POST to {endpoint}")
-        xsrf = rsp_client.lab_xsrf
+        xsrf = client.lab_xsrf
         headers = {"Content-Type": "application/json"}
         if xsrf:
             headers["X-XSRFToken"] = xsrf

@@ -3,15 +3,15 @@
 import datetime
 
 from pydantic import HttpUrl
-from rsp_jupyter_client import RSPJupyterClient
+from rubin.nublado.client import NubladoClient
 from structlog.stdlib import BoundLogger
 
 from ..constants import HTTP_TIMEOUT
 from ..storage.gafaelfawr import GafaelfawrManager
 
 
-class RSPClientManager:
-    """Maintain a cache of tokens to RSP HTTP clients."""
+class ClientManager:
+    """Maintain a cache of tokens to Nublado HTTP clients."""
 
     def __init__(
         self,
@@ -22,22 +22,20 @@ class RSPClientManager:
         self._base_url = base_url
         self._gafaelfawr_manager = gafaelfawr_manager
         self._logger = logger
-        self._client_cache: dict[str, RSPJupyterClient] = {}
-        self._logger.debug("Initialized RSPClientManager")
+        self._client_cache: dict[str, NubladoClient] = {}
+        self._logger.debug("Initialized ClientManager")
 
-    async def get_client(self, token: str) -> RSPJupyterClient:
-        """Get a configured RSP client from a token."""
+    async def get_client(self, token: str) -> NubladoClient:
+        """Get a configured Nublado client from a token."""
         if token not in self._client_cache:
             user = await self._gafaelfawr_manager.get_user(token)
-            self._client_cache[token] = RSPJupyterClient(
+            self._client_cache[token] = NubladoClient(
                 timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
                 logger=self._logger,
                 user=user,
                 base_url=str(self._base_url),
             )
-            self._logger.debug(
-                f"Built RSPJupyterClient for user {user.username}"
-            )
+            self._logger.debug(f"Built NubladoClient for user {user.username}")
         return self._client_cache[token]
 
     async def aclose(self) -> None:

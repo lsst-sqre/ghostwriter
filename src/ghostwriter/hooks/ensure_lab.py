@@ -3,7 +3,7 @@
 import asyncio
 
 import structlog
-from rsp_jupyter_client.models.image import (
+from rubin.nublado.client.models.image import (
     NubladoImageByClass,
     NubladoImageClass,
     NubladoImageSize,

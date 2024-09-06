@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import Annotated, Any
 
 from fastapi import Depends, Request
-from rsp_jupyter_client import RSPJupyterClient
+from rubin.nublado.client import NubladoClient
 from safir.dependencies.gafaelfawr import (
     auth_delegated_token_dependency,
     auth_logger_dependency,
@@ -48,7 +48,7 @@ class RequestContext:
     token: str
     """Token corresponding to authenticated user."""
 
-    rsp_client: RSPJupyterClient
+    client: NubladoClient
     """RSP Client initialized with correct token."""
 
     def rebind_logger(self, **values: Any) -> None:
@@ -84,20 +84,20 @@ class ContextDependency:
         """Create a per-request context."""
         logger.debug("Creating request context.")
         pc = self.process_context
-        rsp_client = await pc.rsp_client_manager.get_client(token)
+        client = await pc.client_manager.get_client(token)
 
         rc = RequestContext(
             request=request,
             logger=logger,
-            user=rsp_client.user.username,
+            user=client.user.username,
             token=token,
-            rsp_client=rsp_client,
+            client=client,
             factory=Factory(pc, logger),
         )
 
         logger.debug(
             f"Created request context for {request} by"
-            f" {rsp_client.user.username}"
+            f" {client.user.username}"
         )
         return rc
 

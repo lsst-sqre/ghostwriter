@@ -7,38 +7,89 @@ hooks.
 from urllib.parse import urljoin
 
 import structlog
+from rubin.nublado.client import NubladoClient
 
 from ..exceptions import HookError
 from ..models.substitution import Parameters
 
+LOGGER = structlog.get_logger("ghostwriter")
+
 
 async def portal_query(params: Parameters) -> None:
     """Create a portal query from a query ID."""
-    logger = structlog.get_logger("ghostwriter")
-    q_id = params.path.split("/")[-1]
     client = params.client
-    http_client = client.http
-    q_url = str(urljoin(params.base_url, f"/api/tap/async/{q_id}"))
-    logger.debug(f"Portal query URL is {q_url}")
-    body = {"type": "portal", "value": q_url}
-    logger.debug(f"Logging in to hub as {params.user}")
+    query_id = _get_query_id(params.path)
+    query_url = _get_tap_url(base_url=params.base_url, query_id=query_id)
+    user_ep = _get_user_endpoint(params.base_url, params.user)
+    LOGGER.debug("TAP query URL", query_url=query_url)
+    LOGGER.debug("Logging in to hub", user=params.user)
     await client.auth_to_hub()
-    logger.debug("Authenticating to lab")
+    LOGGER.debug("Authenticating to lab")
     await client.auth_to_lab()
-    logger.debug("Checking whether query notebook already exists")
-    u_ep = str(urljoin(params.base_url, f"/nb/user/{params.user}"))
-    nb_ep = f"{u_ep}/api/contents/notebooks/queries/portal_{q_id}.ipynb"
-    resp = await http_client.get(nb_ep)
+    LOGGER.debug("Checking whether query notebook already exists")
+    nb_exists = await _check_query_notebook(
+        client=client,
+        query_id=query_id,
+        query_url=query_url,
+        user_endpoint=user_ep,
+    )
+    if not nb_exists:
+        LOGGER.debug("Creating query notebook", query_id=query_id)
+        await _create_query_notebook(
+            client=client,
+            query_url=query_url,
+            user_endpoint=user_ep,
+        )
+    LOGGER.debug("Continuing to redirect")
+
+
+def _get_query_id(path: str) -> str:
+    # The input path is .../queries/<query-id>, so it's just the last
+    # component.  The only way the path wouldn't have at least one slash in
+    # it is if someone has really horrifically messed up their routing
+    # definition.
+    return path.split("/")[-1]
+
+
+def _get_tap_url(base_url: str, query_id: str) -> str:
+    # Construct the tap query endpoint from our base_url and convention
+    async_query_url = "/api/tap/async"
+    return str(urljoin(base_url, f"{async_query_url}/{query_id}"))
+
+
+def _get_user_endpoint(base_url: str, user: str) -> str:
+    return str(urljoin(base_url, f"/nb/user/{user}"))
+
+
+async def _check_query_notebook(
+    client: NubladoClient,
+    query_id: str,
+    query_url: str,
+    user_endpoint: str,
+) -> bool:
+    nb_endpoint = (
+        f"{user_endpoint}/api/contents/notebooks/queries"
+        f"/portal_{query_id}.ipynb"
+    )
+    resp = await client.http.get(nb_endpoint)
     if resp.status_code == 200:
-        logger.debug(f"Notebook for query {q_id} exists.")
-    else:
-        endpoint = f"{u_ep}/rubin/query"
-        logger.debug(f"Sending POST to {endpoint}")
-        xsrf = client.lab_xsrf
-        headers = {"Content-Type": "application/json"}
-        if xsrf:
-            headers["X-XSRFToken"] = xsrf
-        resp = await http_client.post(endpoint, json=body, headers=headers)
-        if resp.status_code >= 400:
-            raise HookError(f"POST to {endpoint} failed: {resp}")
-        logger.debug("Continuing to redirect")
+        LOGGER.debug("Notebook for query exists", query_id=query_id)
+        return True
+    return False
+
+
+async def _create_query_notebook(
+    client: NubladoClient,
+    query_url: str,
+    user_endpoint: str,
+) -> None:
+    body = {"type": "portal", "value": query_url}
+    query_endpoint = f"{user_endpoint}/rubin/query"
+    xsrf = client.lab_xsrf
+    headers = {"Content-Type": "application/json"}
+    if xsrf:
+        headers["X-XSRFToken"] = xsrf
+    LOGGER.debug(f"Sending POST to {query_endpoint}")
+    resp = await client.http.post(query_endpoint, json=body, headers=headers)
+    if resp.status_code >= 400:
+        raise HookError(f"POST to {query_endpoint} failed: {resp}")

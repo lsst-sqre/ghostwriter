@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 from string import Template
-from typing import Annotated
+from typing import Annotated, TypeAlias
 
 from pydantic import AfterValidator, BaseModel, BeforeValidator, Field
 
@@ -20,21 +20,21 @@ from ...exceptions import (
 )
 from ..substitution import Parameters
 
-
-def canonicalize_source_route(v: str) -> str:
-    """Force source route to have one leading and one trailing slash."""
-    return f"/{v.strip('/')}/"
+Hook: TypeAlias = Callable[[Parameters], Awaitable[None]]
 
 
-def resolve_hooks(
-    v: list[str] | list[Callable[[Parameters], Awaitable[None]]],
-) -> list[Callable[[Parameters], Awaitable[None]]]:
-    """Hooks will be listed as strings in the config file.  This loads
-    the corresponding functions.
+def load_hooks(v: list[str | Hook]) -> list[Hook]:
+    """Hooks will be listed as strings in the config file.  This is a model
+    validator, which transforms those strings into the Python objects they
+    represent, which has the effect of loading each corresponding hook
+    function into the namespace.
     """
-    retval: list[Callable[[Parameters], Awaitable[None]]] = []
+    retval: list[Hook] = []
     for hook in v:
         if callable(hook):
+            # We can't check if it's just a Hook, because:
+            # "Parameterized generics cannot be used with class or instance
+            # checks"
             retval.append(hook)
             continue
         if not isinstance(hook, str):
@@ -53,7 +53,12 @@ def resolve_hooks(
     return retval
 
 
-class MapRule(BaseModel):
+def canonicalize_source_route(v: str) -> str:
+    """Force source route to have one leading and one trailing slash."""
+    return f"/{v.strip('/')}/"
+
+
+class RouteMapping(BaseModel):
     """Instructions for rewriting a map."""
 
     source_prefix: Annotated[
@@ -87,7 +92,7 @@ class MapRule(BaseModel):
     ]
 
     hooks: Annotated[
-        None | list[Callable[[Parameters], Awaitable[None]]],
+        None | list[Hook],
         Field(
             title="Pre-substitution hooks",
             description=(
@@ -102,23 +107,11 @@ class MapRule(BaseModel):
                 " returning the URL pointing to it."
             ),
         ),
-        BeforeValidator(resolve_hooks),
+        BeforeValidator(load_hooks),
     ] = None
-
-    skip_hooks: Annotated[
-        bool,
-        Field(
-            title=(
-                "Do not run hooks before substituting routes. You should"
-                " only use this for testing."
-            ),
-        ),
-    ] = False
 
     async def run_hooks(self, params: Parameters) -> None:
         """Run hooks for a route."""
-        if self.skip_hooks:
-            return
         if self.hooks is None:
             return
         try:
@@ -129,8 +122,33 @@ class MapRule(BaseModel):
                 f"Hook {hook} with parameters {params} failed: {exc}"
             ) from exc
 
-    async def resolve(self, params: Parameters) -> str:
-        """Resolve a route."""
+    async def resolve_route(self, params: Parameters) -> str:
+        """Resolve a route.
+
+        Resolution has two phases.
+
+        The first is to run each hook, in order.  Every hook is an async
+        function returning None, that takes a
+        '~ghostwriter.models.substitution.Parameters` object as its only
+        argument, and performs some action, raising an exception if that
+        action fails.
+
+        The second phase is to substitute the target string with any or all
+        of the ``base_url``, ``user``, and ``path`` fields found in the
+        ``Parameters`` object, and to return a string with those templates
+        filled in.
+
+        Parameters
+        ----------
+        params
+            Substitution parameters.
+
+        Returns
+        -------
+        str
+            A string representing the target template with all fields
+        substituted from the supplied parameters.
+        """
         if not params.path.startswith(self.source_prefix[1:]):
             # The source prefix starts with a slash; the passed path will not.
             raise MatchNotFoundError(
@@ -151,16 +169,16 @@ class MapRule(BaseModel):
             ) from exc
 
 
-def sort_routes(v: list[MapRule]) -> list[MapRule]:
+def sort_routes(v: list[RouteMapping]) -> list[RouteMapping]:
     """Sort routes by length, longest first."""
     return sorted(v, key=lambda x: len(str(x)), reverse=True)
 
 
-class RouteMap(BaseModel):
+class RouteCollection(BaseModel):
     """Collection of MapRules."""
 
     routes: Annotated[
-        list[MapRule],
+        list[RouteMapping],
         Field(title="List of route transformation rules"),
         AfterValidator(sort_routes),
     ]
@@ -169,12 +187,15 @@ class RouteMap(BaseModel):
         """Return all matchable source routes."""
         return [x.source_prefix for x in self.routes]
 
-    async def resolve(self, params: Parameters) -> str:
-        """Resolve a route substitution."""
+    async def resolve_route(self, params: Parameters) -> str:
+        """Resolve the first matching route substitution."""
         for route in self.routes:
+            # Because we have sorted the routes, longest first, we will
+            # necessarily hit the most-specific route before a less-specific
+            # one.
             if params.path.startswith(route.source_prefix[1:]):
                 # Source paths start with "/"; targets do not.
-                return await route.resolve(params)
+                return await route.resolve_route(params)
         raise MatchNotFoundError(
             f"No match for {params.path} found in {self.get_routes()}"
         )

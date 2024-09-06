@@ -65,14 +65,15 @@ async def rewrite(
     request: Request,
     logger: Annotated[BoundLogger, Depends(logger_dependency)],
     context: Annotated[RequestContext, Depends(context_dependency)],
+    config: Annotated[Configuration, Depends(config_dependency)],
 ) -> str:
-    logger.debug(f"Request for rewrite: {full_path} [{request.method}]")
+    logger.debug("Request for rewrite", path=full_path, method=request.method)
     params = Parameters(
         user=context.user,
         token=context.token,
         client=context.client,
-        base_url=str(context.factory.context.base_url),
+        base_url=str(config.environment_url),
         path=full_path,
     )
     mapping = context.factory.context.mapping
-    return await mapping.resolve(params)
+    return await mapping.resolve_route(params)

@@ -8,7 +8,7 @@ from rubin.nublado.client.models.user import AuthenticatedUser
 
 from ghostwriter.config import Configuration
 from ghostwriter.models.substitution import Parameters
-from ghostwriter.models.v1.mapping import RouteMap
+from ghostwriter.models.v1.mapping import RouteCollection
 
 
 @pytest.mark.asyncio
@@ -17,7 +17,7 @@ async def test_mapping(config: Configuration) -> None:
     assert config.mapping_file is not None
     with config.mapping_file.open() as f:
         contents = yaml.safe_load(f)
-    routemap = RouteMap.model_validate(contents)
+    routemap = RouteCollection.model_validate(contents)
     assert routemap.get_routes() == ["/tutorials/"]
     params = Parameters(
         user="rachel",
@@ -36,7 +36,7 @@ async def test_mapping(config: Configuration) -> None:
             logger=structlog.get_logger("ghostwriter"),
         ),
     )
-    res = await routemap.resolve(params)
+    res = await routemap.resolve_route(params)
     assert res == (
         "https://data.example.com/nb/user/rachel/lab/tree/notebook05.ipynb"
     )

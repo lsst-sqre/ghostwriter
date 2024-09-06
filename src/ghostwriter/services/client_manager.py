@@ -1,5 +1,6 @@
 """Cache configured per-token RSP clients."""
 
+import asyncio
 import datetime
 
 from pydantic import HttpUrl
@@ -40,6 +41,16 @@ class ClientManager:
 
     async def aclose(self) -> None:
         """Shut down all our clients."""
-        for token in list(self._client_cache.keys()):
-            await self._client_cache[token].close()
-            del self._client_cache[token]
+
+        async def close_client(token: str, client: NubladoClient) -> None:
+            try:
+                await client.close()
+            finally:
+                del self._client_cache[token]
+
+        await asyncio.gather(
+            *(
+                close_client(token, client)
+                for token, client in self._client_cache.items()
+            )
+        )

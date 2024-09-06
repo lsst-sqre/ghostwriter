@@ -8,7 +8,7 @@ There is a list of hooks (possibly empty) for each route specified in the config
 
 Each hook is run in sequence.If any hook raises an exception, the user will receive an error rather than a redirect.
 
-Because (at present) hooks are, by definition, located inside the ``ghostwriter.hooks`` Python module namespace, any additions or modifications to hooks are code and repository changes.
+Because (at least at present) hooks are, by definition, located inside the ``ghostwriter.hooks`` Python module namespace, any additions or modifications to hooks are code and repository changes.
 Therefore, any proposed hooks or modififactions to existing ones will need to go through the SQuaRE PR process.
 
 Anatomy of a Hook
@@ -31,7 +31,7 @@ Three of the fields are obvious: they are ``base_url``, ``path``, and ``user``, 
 
 Two are less obvious: ``token`` and ``client`` (strictly speaking, ``token`` is superfluous since it is very likely only be useful in the context of ``client``, which already knows it, and from which it could be extracted).
 
-The ``client`` field contains an RSP client loaded with the given token, which can be used directly (as ``mobu`` and ``noteburst`` do) to execute Python code (or whole notebooks) within Nublado.
+The ``client`` field contains a Nublado client loaded with the given token, which can be used directly (as ``mobu`` and ``noteburst`` do) to execute Python code (or whole notebooks) within Nublado.
 It can also be used as a generic (yet authenticated) HTTP client for the rest of a Phalanx environment, and thus can be used to talk to any other service, or to the API endpoints within a Lab environment.
 
 The token, from a `Gafaelfawr <https://gafaelfawr.lsst.io>`__ standpoint, is delegated with the ``notebook: {}`` parameter, meaning that it has identical powers to the token the user got from their initial login via Gafaelfawr.
@@ -55,3 +55,4 @@ While this could easily be added to the hook, that workflow already exists as th
 #. The ``client`` uses the ``/api/contents`` endpoint to determine if the requested query notebook already exists, and returns immediately if it does.
 #. Otherwise, the ``client`` constructs the ``POST`` to request a templated notebook from the query ID.
 
+After all hooks have finished, the ``ghostwriter`` service will return an HTTP redirect pointing to the templated notebook constructed (or left unaltered, if it already existed) by the hook.

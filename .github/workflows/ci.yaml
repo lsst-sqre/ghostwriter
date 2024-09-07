@@ -54,51 +54,52 @@ jobs:
           tox-envs: "py,coverage-report,typing"
           tox-requirements: requirements/tox.txt
 
-  docs:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  # Leave commented out until we enable ghostwriter on LTD
+  # docs:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
 
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          # Ensure the documentation gets the right version.
-          fetch-depth: 0
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         # Ensure the documentation gets the right version.
+  #         fetch-depth: 0
 
-      - uses: lsst-sqre/run-tox@v1
-        with:
-          python-version: "3.12"
-          tox-envs: docs
-          tox-requirements: "requirements/tox.txt"
-          cache-key-prefix: docs
+  #     - uses: lsst-sqre/run-tox@v1
+  #       with:
+  #         python-version: "3.12"
+  #         tox-envs: docs
+  #         tox-requirements: "requirements/tox.txt"
+  #         cache-key-prefix: docs
 
-      # Only attempt documentation uploads for long-lived branches, tagged
-      # releases, and pull requests from ticket branches.  This avoids version
-      # clutter in the docs and failures when a PR doesn't have access to
-      # secrets.
-      - uses: lsst-sqre/ltd-upload@v1
-        with:
-          project: ghostwriter
-          dir: "docs/_build/html"
-          username: ${{ secrets.LTD_USERNAME }}
-          password: ${{ secrets.LTD_PASSWORD }}
-        if: >
-          github.event_name != 'merge_group'
-          && (github.event_name != 'pull_request'
-              || startsWith(github.head_ref, 'tickets/'))
+  #     # Only attempt documentation uploads for long-lived branches, tagged
+  #     # releases, and pull requests from ticket branches.  This avoids version
+  #     # clutter in the docs and failures when a PR doesn't have access to
+  #     # secrets.
+  #     - uses: lsst-sqre/ltd-upload@v1
+  #       with:
+  #         project: ghostwriter
+  #         dir: "docs/_build/html"
+  #         username: ${{ secrets.LTD_USERNAME }}
+  #         password: ${{ secrets.LTD_PASSWORD }}
+  #       if: >
+  #         github.event_name != 'merge_group'
+  #         && (github.event_name != 'pull_request'
+  #             || startsWith(github.head_ref, 'tickets/'))
 
-  linkcheck:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+  # linkcheck:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 15
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Check links
-        uses: lsst-sqre/run-tox@v1
-        with:
-          python-version: "3.12"
-          tox-envs: docs-linkcheck
-          tox-requirements: "requirements/tox.txt"
+  #     - name: Check links
+  #       uses: lsst-sqre/run-tox@v1
+  #       with:
+  #         python-version: "3.12"
+  #         tox-envs: docs-linkcheck
+  #         tox-requirements: "requirements/tox.txt"
 
   build:
     runs-on: ubuntu-latest

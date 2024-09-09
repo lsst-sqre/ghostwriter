@@ -9,7 +9,6 @@ from string import Template
 from urllib.parse import urljoin
 
 import structlog
-from httpx import AsyncClient
 
 from ..models.substitution import Parameters
 
@@ -25,8 +24,6 @@ async def tutorial_on_demand(params: Parameters) -> None:
     await client.auth_to_lab()
     async with client.open_lab_session() as lab_session:
         code = _get_code_from_template(params.path)
-        # once nublado-seeds is merged, we could have
-        # something like _get_code_from_nublado_seeds(params.client.http)
         LOGGER.debug("Code for execution in Lab context", code=code)
         await lab_session.run_python(code)
     LOGGER.debug("Continuing to redirect")
@@ -42,28 +39,7 @@ def _get_code_from_template(client_path: str) -> str:
     return Template(code_template).substitute(path=client_path)
 
 
-async def _get_code_from_nublado_seeds(http_client: AsyncClient) -> str:
-    """Get the templated notebook from nublado-seeds, and then extract and
-    return the code contents.
-    """
-    # These are constant for this sort of query
-    org = "lsst-sqre"
-    repo = "nublado-seeds"
-    directory = "tutorials-on-demand"
-    notebook = "fetch"
-
-    nb_url = f"github/{org}/{repo}/{directory}/{notebook}"
-
-    resp = await http_client.get(nb_url)
-    obj = resp.json()
-    return "\n".join(
-        x["source"] for x in obj["cells"] if x["cell_type"] == "code"
-    )
-
-
 def _get_nbcheck_template() -> str:
-    # This should probably go into nublado-seeds.  At least it's an isolated
-    # function, easy to swap out.
     return inspect.cleandoc(
         """import os
         import requests
@@ -76,6 +52,10 @@ def _get_nbcheck_template() -> str:
         nb.parent.mkdir(exist_ok=True)
         if nb.exists():
             # Move extant notebook aside
+            # Note that without more complexity in the redirection
+            # definition, we cannot rename the new version--we have to
+            # rename the extant one, because we don't return anything from the
+            # hook indicating a rename was required.
             now = datetime.now(timezone.utc).isoformat()
             nbdir = nb.parent
             newname = Path("${path}").name + "-" + now + ".ipynb"

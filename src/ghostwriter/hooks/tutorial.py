@@ -76,7 +76,7 @@ def _get_nbcheck_template() -> str:
         nb.parent.mkdir(exist_ok=True)
         if nb.exists():
             # Move extant notebook aside
-            now = datetime.datetime.now(timezone.utc).isoformat()
+            now = datetime.now(timezone.utc).isoformat()
             nbdir = nb.parent
             newname = Path("${path}").name + "-" + now + ".ipynb"
             nb.rename(nbdir / newname)

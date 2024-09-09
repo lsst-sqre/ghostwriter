@@ -34,7 +34,7 @@ There are three template variables, defined in the ``ghostwriter.models.substitu
 hooks
 =====
 
-``hooks`` are described `in another section <../hooks/index.html>`__.
+``hooks`` are described :doc:`in their own section </hooks/index>`.
 
 Examples
 ========

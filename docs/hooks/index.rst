@@ -21,9 +21,10 @@ To signal failure, a hook should raise an ``Exception``.
 If a hook does not wish to modify the parameters used by future hooks or
 route substitution, it should return None.
 
-If it does return an object, that object will first be checked to ensure only the ``path`` and ``unique_id`` fields changed.
-If another field changed, an exception will be raised.
-The returned ``Parameters`` object will be used as the input to subsequent hooks, or, if there are no more hooks, the path substitution.
+If it does return an object, that object will first be checked to ensure only the ``target`` and ``unique_id`` fields changed.
+If any other field changed, an exception will be raised.
+The returned ``Parameters`` object will be used as the input to
+subsequent hooks and to update the target path that will be substituted.
 
 That's the whole thing.
 

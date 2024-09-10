@@ -28,20 +28,28 @@ async def tutorial_on_demand(params: Parameters) -> Parameters | None:
         # We know the stream output should be the serial number and
         # a newline.
         serial = (await lab_session.run_python(code)).strip()
-    if serial != "0":
+    if serial and serial != "0" and params.target is not None:
+        #
+        # params.target is never None, because it's injected by run_hooks(),
+        # but mypy doesn't know that.
+        #
         # We had to change the filename and filename schema.
         # Return a modified Parameters object.
-        pathcomp = params.path.split("/")
-        pathcomp[-1] = "${path}-${unique_id}.ipynb"
-        path = "/".join(pathcomp)
+        #
+        targetcomp = params.target.split("/")
+        targetcomp[-1] = "${path}-${unique_id}.ipynb"
+        target = "/".join(targetcomp)
         unique_id = str(serial)
-        LOGGER.debug("Continuing to redirect", path=path, unique_id=unique_id)
+        LOGGER.debug(
+            "Continuing to redirect", target=target, unique_id=unique_id
+        )
         return Parameters(
             user=params.user,
             base_url=params.base_url,
             token=params.token,
             client=params.client,
-            path=path,
+            path=params.path,
+            target=target,
             unique_id=unique_id,
         )
     LOGGER.debug("Continuing to redirect; params unchanged")
@@ -66,10 +74,11 @@ def _get_nbcheck_template() -> str:
         from datetime import datetime, timezone
         from pathlib import Path
 
+        path = "${path}"
         topdir = Path(os.environ['HOME']) / "notebooks" / "tutorials-on-demand"
-        nb = topdir / "${path}.ipynb"
-        nb_base = nb.name[:-(len(".ipynb"))]
-        nbdir = nb.parent
+        nbdir = (topdir / path).parent
+        nb_base = Path(path).name
+        nb = Path(nbdir / f"{nb_base}.ipynb")
         nbdir.mkdir(exist_ok=True)
         serial = 0
         while nb.exists():
@@ -82,7 +91,7 @@ def _get_nbcheck_template() -> str:
         owner = "rubin-dp0"
         repo = "tutorial-notebooks"
         branch = "prod"
-        url = f"https://api.github.com/repos/{owner}/{repo}/contents/${path}"
+        url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
         url += f".ipynb?ref={branch}"
         r=requests.get(url)
         obj=r.json()

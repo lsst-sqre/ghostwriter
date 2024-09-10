@@ -8,7 +8,8 @@ from rubin.nublado.client import NubladoClient
 @dataclass
 class Parameters:
     """Parameters and clients needed for route transformation and hook
-    execution.
+    execution.  Note that target and unique_id should be intially unset,
+    although they may be updated during hook processing.
     """
 
     user: str
@@ -16,11 +17,14 @@ class Parameters:
     path: str
     token: str
     client: NubladoClient
+    target: str | None = None
     unique_id: str | None = None
 
     def __str__(self) -> str:
-        ret = f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'"
-        ret += f" Path: '{self.path}; "
+        ret = f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'; "
+        ret += f"Path: '{self.path}; "
+        if self.target:
+            ret += f"Target: '{self.target}'; "
         if self.unique_id:
             ret += f"UniqueID: {self.unique_id}; "
         ret += "Token and RSP client redacted]"
@@ -32,5 +36,6 @@ class Parameters:
             "user": self.user,
             "base_url": self.base_url,
             "path": self.path,
+            "target": self.target or "",
             "unique_id": self.unique_id or "",
         }

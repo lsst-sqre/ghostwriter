@@ -110,22 +110,37 @@ class RouteMapping(BaseModel):
         BeforeValidator(load_hooks),
     ] = None
 
-    async def run_hooks(self, params: Parameters) -> None:
-        """Run hooks for a route."""
+    async def run_hooks(self, params: Parameters) -> Parameters:
+        """Run hooks for a route.  Return a set of parameters, which may be
+        modified from the ones we received.
+
+        Parameters
+        ----------
+        params
+            Substitution parameters.
+
+        Returns
+        -------
+        `~ghostwriter.models.substitution.Parameters`
+            Parameters to pass to the URL rewrite.  These may not be the same
+        as the ones that we received as our input parameters (specifically,
+        target and unique_id may have changed).
+        """
         if self.hooks is None:
-            return
+            return params
         try:
             for hook in self.hooks:
+                params.target = self.target
                 res = await hook(params)
                 if res is None:
                     continue
                 # If we got back a value, those are our new parameters.
-                # The path may be mutated, and unique_id may have changed.
-                # If base_url, user, token, or client has changed, call
-                # shenanigans and raise an error.
+                # The target field and unique_id fields may have
+                # changed. If base_url, user, path, token, or client has
+                # changed, call shenanigans and raise an error.
                 errs = [
                     x
-                    for x in ("base_url", "user", "token", "client")
+                    for x in ("base_url", "user", "token", "client", "path")
                     if getattr(res, x) != getattr(params, x)
                 ]
                 if errs:
@@ -135,10 +150,14 @@ class RouteMapping(BaseModel):
                     errstr += f": {', '.join(errs)}"
                     raise RuntimeError(errstr)  # Immediately converted
                 params = res
+                if res.target is not None and res.target != self.target:
+                    # Update target with result field if it changed
+                    self.target = res.target
         except Exception as exc:
             raise HookError(
                 f"Hook {hook} with parameters {params} failed: {exc}"
             ) from exc
+        return params
 
     async def resolve_route(self, params: Parameters) -> str:
         """Resolve a route.
@@ -147,19 +166,21 @@ class RouteMapping(BaseModel):
 
         The first is to run each hook, in order.  Every hook is an async
         function that takes a `~ghostwriter.models.substitution.Parameters`
-        object as its only argument, and returns either ``None`` or a
-        `~ghostwriter.models.substitution.Parameters` object.  The hook may
-        take any action it desires, and it should raise an exception if that
-        action fails.  If it returns a ``Parameters`` object, only the
-        ``path`` and ``unique_id`` fields may differ.  Any other change will
-        raise an exception.  If the hook returns a value, that value is used
-        as the ``Parameters`` input for subsequent hooks.  Otherwise the input
-        remains unchanged.
+        object as its only argument.  It returns either ``None`` or a
+        `~ghostwriter.models.substitution.Parameters` object.  The hook
+        may take any action it desires, and it should raise an exception if
+        that action fails.  If it returns a ``Parameters`` object, only the
+        ``target`` and ``unique_id`` fields may differ from the input.
+        Any other change will raise an exception.  If the hook returns a
+        value, that value is used as the ``Parameters`` input for subsequent
+        hooks, and the route target is updated immediately.  Otherwise
+        the input remains unchanged.
 
-        The second phase is to substitute the target string with any or all
-        of the ``base_url``, ``user``, ``path``, and ``unique_id`` fields
-        found in the final ``Parameters`` object, and to return a string
-        with those templates filled in.
+        The second is to substitute the (possibly updated) route target
+        template with any or all of the ``base_url``, ``user``, ``path``,
+        and ``unique_id`` fields.  This will return a string with
+        those placeholders filled in, and that in turn will be the final
+        target of the HTTP redirect response received by the user.
 
         Parameters
         ----------
@@ -177,7 +198,9 @@ class RouteMapping(BaseModel):
             raise MatchNotFoundError(
                 f"Source {self.source_prefix} does not match {params.path}"
             )
-        await self.run_hooks(params=params)
+        params = await self.run_hooks(params=params)
+        if params.target is not None:
+            self.target = params.target
         tmpl = Template(self.target)
         mapping = params.rewrite_mapping()
         full_path = mapping["path"]

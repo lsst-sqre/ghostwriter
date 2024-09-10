@@ -37,9 +37,20 @@ Obviously that begs the question of "what's in a ``Parameters`` object?"
 
 Three of the fields are obvious: they are ``base_url``, ``path``, and ``user``, all used in path construction for the redirect.
 
-Two are less obvious: ``token`` and ``client`` (strictly speaking, ``token`` is superfluous since it is very likely only be useful in the context of ``client``, which already knows it, and from which it could be extracted).
+Two fields are only for use by the hook itself: those are ``target`` and ``unique_id``.
+The ``target`` field will be injected when the hook is run, and the ``unique_id`` field may be populated.
+These two are the only fields a hook is permitted to change if it returns a ``Parameters`` object.
+The ``target`` may need to be rewritten to accomodate a ``unique_id``.
+The motivation here is simply to avoid rewriting existing files: the correct response is context-dependendent, and might be to redirect to the existing file, but it equally well might be to create a new file under a different name.
+In this case, the file name stem (that is, the part before the suffix) might need to be appended with a ``unique_id``, which could be (again, the best choice depends on context) a serial number, as in ``Untitled2.ipynb``, or a string representation of the date and time, or simply a UUID.
+The ``unique_id`` can be any string legal in a filename, as long as the filename containing it will be distinct from any other filename in the directory.
+Guaranteeing that it is unique is the job of the hook writer.
+Given the context, the existing hooks do not worry much about race conditions.
+If you are using the date or an incrementing integer...you are still in an RSP context, so it's very unlikely a user will go to the same redirected URL twice in the same microsecond, or even twice within the time it takes to write out a notebook.  If you do have some high-frequency use case, a UUID would be a better choice.
 
-The ``client`` field contains a Nublado client loaded with the given token, which can be used directly (as ``mobu`` and ``noteburst`` do) to execute Python code (or whole notebooks) within Nublado.
+The final pair of fields are slightly more obscure: ``token`` and ``client`` (strictly speaking, ``token`` is superfluous since it is very likely only be useful in the context of ``client``, which already knows it, and from which it could be extracted).
+
+The ``client`` field contains a Nublado client loaded with the given token, which can be used directly (as ``mobu`` and ``noteburst`` do) to execute Python code (or whole notebooks) within the context of a kernel within a Nublado JupyterLab.
 It can also be used as a generic (yet authenticated) HTTP client for the rest of a Phalanx environment, and thus can be used to talk to any other service, or to the API endpoints within a Lab environment.
 
 The token, from a `Gafaelfawr <https://gafaelfawr.lsst.io>`__ standpoint, is delegated with the ``notebook: {}`` parameter, meaning that it has identical powers to the token the user got from their initial login via Gafaelfawr.

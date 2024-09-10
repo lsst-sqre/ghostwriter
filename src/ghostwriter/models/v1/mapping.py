@@ -20,7 +20,7 @@ from ...exceptions import (
 )
 from ..substitution import Parameters
 
-Hook: TypeAlias = Callable[[Parameters], Awaitable[None]]
+Hook: TypeAlias = Callable[[Parameters], Awaitable[None | Parameters]]
 
 
 def load_hooks(v: list[str | Hook]) -> list[Hook]:
@@ -116,7 +116,25 @@ class RouteMapping(BaseModel):
             return
         try:
             for hook in self.hooks:
-                await hook(params)
+                res = await hook(params)
+                if res is None:
+                    continue
+                # If we got back a value, those are our new parameters.
+                # The path may be mutated, and unique_id may have changed.
+                # If base_url, user, token, or client has changed, call
+                # shenanigans and raise an error.
+                errs = [
+                    x
+                    for x in ("base_url", "user", "token", "client")
+                    if getattr(res, x) != getattr(params, x)
+                ]
+                if errs:
+                    errstr = "Attempt to change immutable parameter"
+                    if len(errs) > 1:
+                        errstr += "s"
+                    errstr += f": {', '.join(errs)}"
+                    raise RuntimeError(errstr)  # Immediately converted
+                params = res
         except Exception as exc:
             raise HookError(
                 f"Hook {hook} with parameters {params} failed: {exc}"
@@ -128,15 +146,20 @@ class RouteMapping(BaseModel):
         Resolution has two phases.
 
         The first is to run each hook, in order.  Every hook is an async
-        function returning None, that takes a
-        '~ghostwriter.models.substitution.Parameters` object as its only
-        argument, and performs some action, raising an exception if that
-        action fails.
+        function that takes a `~ghostwriter.models.substitution.Parameters`
+        object as its only argument, and returns either ``None`` or a
+        `~ghostwriter.models.substitution.Parameters` object.  The hook may
+        take any action it desires, and it should raise an exception if that
+        action fails.  If it returns a ``Parameters`` object, only the
+        ``path`` and ``unique_id`` fields may differ.  Any other change will
+        raise an exception.  If the hook returns a value, that value is used
+        as the ``Parameters`` input for subsequent hooks.  Otherwise the input
+        remains unchanged.
 
         The second phase is to substitute the target string with any or all
-        of the ``base_url``, ``user``, and ``path`` fields found in the
-        ``Parameters`` object, and to return a string with those templates
-        filled in.
+        of the ``base_url``, ``user``, ``path``, and ``unique_id`` fields
+        found in the final ``Parameters`` object, and to return a string
+        with those templates filled in.
 
         Parameters
         ----------

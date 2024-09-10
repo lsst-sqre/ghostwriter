@@ -16,12 +16,15 @@ class Parameters:
     path: str
     token: str
     client: NubladoClient
+    unique_id: str | None = None
 
     def __str__(self) -> str:
-        return (
-            f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'"
-            f" Path: '{self.path}'; Token and RSP client <redacted>]"
-        )
+        ret = f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'"
+        ret += f" Path: '{self.path}; "
+        if self.unique_id:
+            ret += f"UniqueID: {self.unique_id}; "
+        ret += "Token and RSP client redacted]"
+        return ret
 
     def rewrite_mapping(self) -> dict[str, str]:
         """Return sanitized version for rewriting path."""
@@ -29,4 +32,5 @@ class Parameters:
             "user": self.user,
             "base_url": self.base_url,
             "path": self.path,
+            "unique_id": self.unique_id or "",
         }

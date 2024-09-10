@@ -55,7 +55,7 @@ pydantic-core==2.23.3
     # via
     #   pydantic
     #   safir
-pydantic-settings==2.4.0
+pydantic-settings==2.5.0
     # via -r requirements/main.in
 pyjwt==2.9.0
     # via gidgethub

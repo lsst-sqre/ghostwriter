@@ -153,7 +153,7 @@ matplotlib-inline==0.1.7
     # via
     #   ipykernel
     #   ipython
-mdit-py-plugins==0.4.1
+mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
@@ -216,7 +216,7 @@ pydantic-core==2.23.3
     # via
     #   -c requirements/main.txt
     #   pydantic
-pydantic-settings==2.4.0
+pydantic-settings==2.5.0
     # via
     #   -c requirements/main.txt
     #   autodoc-pydantic
@@ -230,7 +230,7 @@ pygments==2.18.0
     #   sphinx-prompt
 pylatexenc==2.10
     # via documenteer
-pytest==8.3.2
+pytest==8.3.3
     # via
     #   -r requirements/dev.in
     #   pytest-asyncio

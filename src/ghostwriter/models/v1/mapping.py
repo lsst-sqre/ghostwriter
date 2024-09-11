@@ -58,6 +58,12 @@ def canonicalize_source_route(v: str) -> str:
     return f"/{v.strip('/')}/"
 
 
+def reject_initial(v: str | None) -> None:
+    """Disallow field from being set at initialization time."""
+    if v is not None:
+        raise ValueError("This field cannot be set at initialization")
+
+
 class RouteMapping(BaseModel):
     """Instructions for rewriting a map."""
 
@@ -89,6 +95,19 @@ class RouteMapping(BaseModel):
             ),
             examples=["${base_url}/nb/user/${user}/lab/tree/${path}.ipynb"],
         ),
+    ]
+
+    _original_target: Annotated[
+        str | None,
+        Field(
+            title="Target route",
+            description=(
+                "Stash for original target, so we can restore it after"
+                " redirect is issued"
+            ),
+            examples=["${base_url}/nb/user/${user}/lab/tree/${path}.ipynb"],
+        ),
+        BeforeValidator(reject_initial),
     ]
 
     hooks: Annotated[
@@ -129,6 +148,7 @@ class RouteMapping(BaseModel):
         if self.hooks is None:
             return params
         try:
+            self._original_target = self.target  # Save initial target
             for hook in self.hooks:
                 params.target = self.target
                 res = await hook(params)
@@ -201,13 +221,19 @@ class RouteMapping(BaseModel):
         params = await self.run_hooks(params=params)
         if params.target is not None:
             self.target = params.target
+            if self._original_target is None:
+                self._original_target = params.target
         tmpl = Template(self.target)
         mapping = params.rewrite_mapping()
         full_path = mapping["path"]
         # Strip matched path
         mapping["path"] = full_path[(len(self.source_prefix) - 1) :]
         try:
-            return tmpl.substitute(mapping)
+            result = tmpl.substitute(mapping)
+            # Reset target
+            if self._original_target is not None:
+                self.target = self._original_target
+            return result
         except Exception as exc:
             raise ResolutionError(
                 f"Resolving {self.target} with parameters {params}"
@@ -241,6 +267,7 @@ class RouteCollection(BaseModel):
             # one.
             if params.path.startswith(route.source_prefix[1:]):
                 # Source paths start with "/"; targets do not.
+                # Restore target.
                 return await route.resolve_route(params)
         raise MatchNotFoundError(
             f"No match for {params.path} found in {self.get_routes()}"

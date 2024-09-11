@@ -118,6 +118,9 @@ select = ["ALL"]
     "S301",    # allow tests for whether code can be pickled
     "SLF001",  # tests are allowed to access private members
 ]
+"src/ghostwriter/models/v1/mapping.py" = [
+    "TRY300",  # We really do want the statement outside an else block
+]
 
 # These are too useful as attributes or methods to allow the conflict with the
 # built-in to rule out their use.

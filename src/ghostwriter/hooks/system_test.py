@@ -15,8 +15,8 @@ from ..models.substitution import Parameters
 LOGGER = structlog.get_logger("ghostwriter")
 
 
-async def tutorial_on_demand(params: Parameters) -> Parameters | None:
-    """Check out a particular tutorial notebook."""
+async def system_test(params: Parameters) -> Parameters | None:
+    """Check out a particular notebook."""
     client = params.client
     LOGGER.debug("Logging in to hub", user=params.user)
     await client.auth_to_hub()
@@ -75,7 +75,7 @@ def _get_nbcheck_template() -> str:
         from pathlib import Path
 
         path = "${path}"
-        topdir = Path(os.environ['HOME']) / "notebooks" / "tutorials-on-demand"
+        topdir = Path(os.environ['HOME']) / "notebooks" / "on-demand"
         nbdir = (topdir / path).parent
         nb_base = Path(path).name
         nb = Path(nbdir / f"{nb_base}.ipynb")
@@ -88,8 +88,8 @@ def _get_nbcheck_template() -> str:
 
         # Retrieve notebook content from github.
         # Owner, repo, and branch are constant in this context.
-        owner = "rubin-dp0"
-        repo = "tutorial-notebooks"
+        owner = "lsst-sqre"
+        repo = "system-test"
         branch = "prod"
         url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
         url += f".ipynb?ref={branch}"

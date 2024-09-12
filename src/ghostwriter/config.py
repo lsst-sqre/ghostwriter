@@ -43,9 +43,9 @@ class Configuration(BaseSettings):
                 " valid URL, ghostwriter will abort during startup."
             ),
             validation_alias="GHOSTWRITER_ENVIRONMENT_URL",
-            examples=["https://data.example.org/"],
+            examples=["https://data.example.org"],
         ),
-    ] = HttpUrl("http://localhost:8080")
+    ] = HttpUrl("http://localhost:8080/")
 
     mapping_file: Annotated[
         Path | None,

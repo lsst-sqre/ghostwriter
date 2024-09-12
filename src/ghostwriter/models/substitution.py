@@ -22,7 +22,7 @@ class Parameters:
 
     def __str__(self) -> str:
         ret = f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'; "
-        ret += f"Path: '{self.path}; "
+        ret += f"Path: '{self.path}'; "
         if self.target:
             ret += f"Target: '{self.target}'; "
         if self.unique_id:
@@ -32,9 +32,12 @@ class Parameters:
 
     def rewrite_mapping(self) -> dict[str, str]:
         """Return sanitized version for rewriting path."""
+        # source_prefix will begin with a slash, so base_url should have its
+        # stripped.
+        base_url = self.base_url.rstrip("/")
         return {
             "user": self.user,
-            "base_url": self.base_url,
+            "base_url": base_url,
             "path": self.path,
             "target": self.target or "",
             "unique_id": self.unique_id or "",

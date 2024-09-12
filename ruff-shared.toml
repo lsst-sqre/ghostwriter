@@ -118,7 +118,7 @@ select = ["ALL"]
     "S301",    # allow tests for whether code can be pickled
     "SLF001",  # tests are allowed to access private members
 ]
-"src/ghostwriter/models/v1/mapping.py" = [
+"src/ghostwriter/services/rewrite.py" = [
     "TRY300",  # We really do want the statement outside an else block
 ]
 "src/ghostwriter/hooks/_github_notebook_payload.py" = [

@@ -13,6 +13,7 @@ from ..dependencies.config import config_dependency
 from ..dependencies.context import RequestContext, context_dependency
 from ..models.index import Index
 from ..models.substitution import Parameters
+from ..services.rewrite import rewrite_request
 
 __all__ = ["get_index", "external_router"]
 
@@ -76,4 +77,4 @@ async def rewrite(
         path=full_path,
     )
     mapping = context.factory.context.mapping
-    return await mapping.resolve_route(params)
+    return await rewrite_request(mapping, params, logger)

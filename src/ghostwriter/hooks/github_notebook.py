@@ -1,6 +1,6 @@
 """Takes a GitHub notebook repo/owner/path from the request path and
 puts it into the user's lab environment.  We assume there's already a running
-lab, which we can he sure of by putting ensure_running_lab in before this in
+lab, which we can be sure of by putting ensure_running_lab in before this in
 the hooks.
 """
 

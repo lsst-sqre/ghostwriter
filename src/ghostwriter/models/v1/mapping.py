@@ -108,7 +108,7 @@ class RouteMapping(BaseModel):
             examples=["${base_url}/nb/user/${user}/lab/tree/${path}.ipynb"],
         ),
         BeforeValidator(reject_initial),
-    ]
+    ] = None
 
     hooks: Annotated[
         None | list[Hook],

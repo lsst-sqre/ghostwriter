@@ -83,23 +83,30 @@ def _get_nbcheck_template() -> str:
             path = branch_components[0]
             branch = branch_components[1]
         path_components = path.split("/")
-        if len(path_components) < 3:
-            raise RuntimeError(f"owner/repo/file not found in '{path}'")
-        owner = path[0]
-        repo = path[1]
+        if len(path_components) < 4:
+            raise RuntimeError(f"host/owner/repo/file not found in '{path}'")
+        host = path_components[0]
+        owner = path_components[1]
+        repo = path_components[2]
+        rest = "/".join(path_components[3:])
+        # Filter by allowed hosts--just "github.com", because we use the GH
+        # API
+        if host != "github.com":
+            raise RuntimeError(f"'{host}' not 'github.com'")
         # Filter by allowed owning organizations
-        allowed = ("lsst", "lsst-dm", "lsst-sqre", "lsst-ts", "rubin-dp0")
-        if owner not in allowed:
+        allowed_owners = ("lsst", "lsst-dm", "lsst-sqre",
+                          "lsst-ts", "rubin-dp0")
+        if owner not in allowed_owners:
             raise RuntimeError(f"{owner} not in {allowed}")
         # Canonicalize path
         if path.endswith(".ipynb"):
-            path=path[:len(".ipynb")]
-        topdir = (Path(os.environ['HOME']) / "notebooks" /
-                  "on-demand" / "github.com")
+            path=path[:-(len(".ipynb"))]
+            rest=rest[:-(len(".ipynb"))]
+        topdir = Path(os.environ['HOME']) / "notebooks" / "on-demand"
         nbdir = (topdir / path).parent
         nb_base = Path(path).name
         nb = Path(nbdir / f"{nb_base}.ipynb")
-        nbdir.mkdir(exist_ok=True)
+        nbdir.mkdir(exist_ok=True, parents=True)
         serial = 0
         while nb.exists():
             # Count up until we find an unused number to append to the name.
@@ -107,7 +114,7 @@ def _get_nbcheck_template() -> str:
             nb = nbdir / f"{nb_base}-{serial}.ipynb"
 
         # Retrieve notebook content from github.
-        url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+        url = f"https://api.github.com/repos/{owner}/{repo}/contents/{rest}"
         url += ".ipynb"
         if branch:
             url += f"?ref={branch}"

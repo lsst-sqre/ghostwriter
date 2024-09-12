@@ -21,7 +21,7 @@ cryptography==43.0.1
     # via
     #   pyjwt
     #   safir
-fastapi==0.114.0
+fastapi==0.114.1
     # via
     #   -r requirements/main.in
     #   safir
@@ -55,7 +55,7 @@ pydantic-core==2.23.3
     # via
     #   pydantic
     #   safir
-pydantic-settings==2.5.0
+pydantic-settings==2.5.2
     # via -r requirements/main.in
 pyjwt==2.9.0
     # via gidgethub

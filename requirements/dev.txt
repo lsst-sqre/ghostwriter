@@ -98,7 +98,7 @@ idna==3.8
     #   sphinx-prompt
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==8.4.0
+importlib-metadata==8.5.0
     # via
     #   jupyter-cache
     #   myst-nb
@@ -216,7 +216,7 @@ pydantic-core==2.23.3
     # via
     #   -c requirements/main.txt
     #   pydantic
-pydantic-settings==2.5.0
+pydantic-settings==2.5.2
     # via
     #   -c requirements/main.txt
     #   autodoc-pydantic
@@ -380,6 +380,8 @@ traitlets==5.14.3
     #   nbformat
 types-pyyaml==6.0.12.20240808
     # via -r requirements/dev.in
+types-requests==2.32.0.20240907
+    # via -r requirements/dev.in
 typing-extensions==4.12.2
     # via
     #   -c requirements/main.txt
@@ -395,6 +397,7 @@ urllib3==2.2.2
     #   documenteer
     #   requests
     #   sphinx-prompt
+    #   types-requests
 wcwidth==0.2.13
     # via prompt-toolkit
 zipp==3.20.1

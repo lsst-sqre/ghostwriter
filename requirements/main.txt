@@ -21,7 +21,7 @@ cryptography==43.0.1
     # via
     #   pyjwt
     #   safir
-fastapi==0.114.1
+fastapi==0.114.2
     # via
     #   -r requirements/main.in
     #   safir
@@ -67,7 +67,7 @@ pyyaml==6.0.2
     # via
     #   -r requirements/main.in
     #   uvicorn
-rubin-nublado-client @ git+https://github.com/lsst-sqre/nublado@76615a8053112360417b68723871e59b6ebe8463#subdirectory=client
+rubin-nublado-client @ git+https://github.com/lsst-sqre/nublado@5b462bc556f9620fe7eaa1317fcfdeff4e0a6062#subdirectory=client
     # via -r requirements/main.in
 safir==6.3.0
     # via -r requirements/main.in

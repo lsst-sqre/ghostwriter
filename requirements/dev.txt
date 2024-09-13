@@ -188,7 +188,7 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-platformdirs==4.3.2
+platformdirs==4.3.3
     # via jupyter-core
 pluggy==1.5.0
     # via pytest
@@ -277,7 +277,9 @@ rpds-py==0.20.0
 scriv==1.5.1
     # via -r requirements/dev.in
 setuptools==74.1.2
-    # via documenteer
+    # via
+    #   documenteer
+    #   sphinxcontrib-bibtex
 six==1.16.0
     # via
     #   asttokens
@@ -316,9 +318,9 @@ sphinx==8.0.2
     #   sphinxcontrib-youtube
     #   sphinxext-opengraph
     #   sphinxext-rediraffe
-sphinx-autodoc-typehints==2.4.0
+sphinx-autodoc-typehints==2.4.1
     # via documenteer
-sphinx-automodapi==0.17.0
+sphinx-automodapi==0.18.0
     # via documenteer
 sphinx-copybutton==0.5.2
     # via documenteer
@@ -330,7 +332,7 @@ sphinx-prompt==1.9.0
     # via documenteer
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
-sphinxcontrib-bibtex==2.6.2
+sphinxcontrib-bibtex==2.6.3
     # via documenteer
 sphinxcontrib-devhelp==2.0.0
     # via sphinx
@@ -392,7 +394,7 @@ typing-extensions==4.12.2
     #   sqlalchemy
 uc-micro-py==1.0.3
     # via linkify-it-py
-urllib3==2.2.2
+urllib3==2.2.3
     # via
     #   documenteer
     #   requests
@@ -400,5 +402,5 @@ urllib3==2.2.2
     #   types-requests
 wcwidth==0.2.13
     # via prompt-toolkit
-zipp==3.20.1
+zipp==3.20.2
     # via importlib-metadata

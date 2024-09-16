@@ -20,5 +20,5 @@ safir>=5
 
 PyYAML
 
-rubin.nublado.client@git+https://github.com/lsst-sqre/nublado@tickets/DM-46157#subdirectory=client
+rubin.nublado.client@git+https://github.com/lsst-sqre/nublado@tickets/DM-46157B#subdirectory=client
 httpx_sse  # Apparently not discovered from rubin.nublado.client

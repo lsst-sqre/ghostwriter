@@ -358,7 +358,7 @@ sphinxext-opengraph==0.9.1
     # via documenteer
 sphinxext-rediraffe==0.2.7
     # via documenteer
-sqlalchemy==2.0.34
+sqlalchemy==2.0.35
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython

@@ -16,6 +16,7 @@ from fastapi import Depends, Request
 from rubin.nublado.client import NubladoClient
 from safir.dependencies.gafaelfawr import (
     auth_delegated_token_dependency,
+    auth_dependency,
     auth_logger_dependency,
 )
 from structlog.stdlib import BoundLogger
@@ -78,27 +79,25 @@ class ContextDependency:
     async def __call__(
         self,
         request: Request,
+        username: Annotated[str, Depends(auth_dependency)],
         logger: Annotated[BoundLogger, Depends(auth_logger_dependency)],
         token: Annotated[str, Depends(auth_delegated_token_dependency)],
     ) -> RequestContext:
         """Create a per-request context."""
         logger.debug("Creating request context.")
         pc = self.process_context
-        client = await pc.client_manager.get_client(token)
+        client = await pc.client_manager.get_client(username, token)
 
         rc = RequestContext(
             request=request,
             logger=logger,
-            user=client.user.username,
+            user=username,
             token=token,
             client=client,
             factory=Factory(pc, logger),
         )
 
-        logger.debug(
-            f"Created request context for {request} by"
-            f" {client.user.username}"
-        )
+        logger.debug(f"Created request context for {request} by {username}")
         return rc
 
     @property

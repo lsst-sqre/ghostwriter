@@ -5,10 +5,10 @@ import datetime
 
 from pydantic import HttpUrl
 from rubin.nublado.client import NubladoClient
+from rubin.nublado.client.models.user import User
 from structlog.stdlib import BoundLogger
 
 from ..constants import HTTP_TIMEOUT
-from ..storage.gafaelfawr import GafaelfawrManager
 
 
 class ClientManager:
@@ -17,26 +17,23 @@ class ClientManager:
     def __init__(
         self,
         base_url: HttpUrl,
-        gafaelfawr_manager: GafaelfawrManager,
         logger: BoundLogger,
     ) -> None:
         self._base_url = base_url
-        self._gafaelfawr_manager = gafaelfawr_manager
         self._logger = logger
         self._client_cache: dict[str, NubladoClient] = {}
         self._logger.debug("Initialized ClientManager")
 
-    async def get_client(self, token: str) -> NubladoClient:
-        """Get a configured Nublado client from a token."""
+    async def get_client(self, username: str, token: str) -> NubladoClient:
+        """Get a configured Nublado client from a user and token."""
         if token not in self._client_cache:
-            user = await self._gafaelfawr_manager.get_user(token)
             self._client_cache[token] = NubladoClient(
-                timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
                 logger=self._logger,
-                user=user,
+                user=User(username=username, token=token),
                 base_url=str(self._base_url),
+                timeout=datetime.timedelta(seconds=HTTP_TIMEOUT),
             )
-            self._logger.debug(f"Built NubladoClient for user {user.username}")
+            self._logger.debug(f"Built NubladoClient for user {username}")
         return self._client_cache[token]
 
     async def aclose(self) -> None:

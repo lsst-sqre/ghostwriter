@@ -10,7 +10,6 @@ from structlog.stdlib import BoundLogger
 from .dependencies.config import config_dependency
 from .models.v1.mapping import RouteCollection
 from .services.client_manager import ClientManager
-from .storage.gafaelfawr import GafaelfawrManager
 
 __all__ = ["Factory", "ProcessContext"]
 
@@ -32,9 +31,6 @@ class ProcessContext:
     mapping
         Rewrite mapping; read from file specified in config.
 
-    gafaelfawr_manager
-        Cache for token-to-user-and-capability mappings.
-
     client_manager
         Cache for token-to-rsp-client mapping.
     """
@@ -45,11 +41,9 @@ class ProcessContext:
         self.base_url = self.config.environment_url
         if self.base_url is None:
             raise RuntimeError("config.environment_url must be set")
-        self.gafaelfawr_manager = GafaelfawrManager(base_url=self.base_url)
         self.client_manager = ClientManager(
             base_url=self.base_url,
             logger=self.logger,
-            gafaelfawr_manager=self.gafaelfawr_manager,
         )
         self.mapping = self.load_map()
 

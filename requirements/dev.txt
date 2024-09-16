@@ -89,7 +89,7 @@ httpx==0.27.2
     #   -c requirements/main.txt
     #   -r requirements/dev.in
     #   respx
-idna==3.8
+idna==3.10
     # via
     #   -c requirements/main.txt
     #   anyio
@@ -276,7 +276,7 @@ rpds-py==0.20.0
     #   referencing
 scriv==1.5.1
     # via -r requirements/dev.in
-setuptools==74.1.2
+setuptools==75.1.0
     # via
     #   documenteer
     #   sphinxcontrib-bibtex
@@ -382,7 +382,7 @@ traitlets==5.14.3
     #   nbformat
 types-pyyaml==6.0.12.20240808
     # via -r requirements/dev.in
-types-requests==2.32.0.20240907
+types-requests==2.32.0.20240914
     # via -r requirements/dev.in
 typing-extensions==4.12.2
     # via

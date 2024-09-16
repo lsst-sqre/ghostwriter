@@ -67,7 +67,7 @@ pyyaml==6.0.2
     # via
     #   -r requirements/main.in
     #   uvicorn
-rubin-nublado-client @ git+https://github.com/lsst-sqre/nublado@6eb00e3dd2e57a501894d9b0e945022aec8b7e7e#subdirectory=client
+rubin-nublado-client @ git+https://github.com/lsst-sqre/nublado@81345fe59f510fcd8f3595abe4cb4e265d62c655#subdirectory=client
     # via -r requirements/main.in
 safir==6.3.0
     # via -r requirements/main.in

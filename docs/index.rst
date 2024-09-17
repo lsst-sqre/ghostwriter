@@ -12,7 +12,7 @@ Ghostwriter
 
 Ghostwriter is a service to provide link shortening and personalization for a Phalanx installation.
 
-There are two initial use cases: the first is to allow specification of a generic URL for tutorial notebooks that will open them in a user's Lab environment.
+There are two initial use cases: the first is to allow specification of a generic URL for notebooks hosted on github.com by certain owners (currently, lsst, lsst-dm, lsst-square, lsst-ts, and rubin-dp0) that will download those notebooks and open them in a user's Lab.
 
 The second is to allow appending a Portal UWS query ID to a generic route, and have that open a templated notebook in a user's Lab containing retrieval of that query and conversion to a table.
 

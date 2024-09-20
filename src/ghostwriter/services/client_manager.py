@@ -5,7 +5,7 @@ import datetime
 
 from pydantic import HttpUrl
 from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models.user import User
+from rubin.nublado.client.models import User
 from structlog.stdlib import BoundLogger
 
 from ..constants import HTTP_TIMEOUT

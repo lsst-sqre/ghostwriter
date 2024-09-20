@@ -4,7 +4,7 @@ import pytest
 import structlog
 import yaml
 from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models.user import User
+from rubin.nublado.client.models import User
 
 from ghostwriter.config import Configuration
 from ghostwriter.models.substitution import Parameters

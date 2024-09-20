@@ -4,7 +4,7 @@ import asyncio
 
 import structlog
 from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models.image import (
+from rubin.nublado.client.models import (
     NubladoImage,
     NubladoImageByClass,
     NubladoImageClass,

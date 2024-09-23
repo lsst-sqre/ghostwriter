@@ -16,9 +16,6 @@ uvicorn[standard]
 # Other dependencies.
 pydantic
 pydantic-settings
-safir>=5
-
 PyYAML
-
-rubin.nublado.client@git+https://github.com/lsst-sqre/nublado#subdirectory=client
-httpx_sse  # Apparently not discovered from rubin.nublado.client
+rubin-nublado-client
+safir>=5

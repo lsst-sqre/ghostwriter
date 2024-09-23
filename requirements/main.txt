@@ -452,9 +452,9 @@ pyyaml==6.0.2 \
     #   -r requirements/main.in
     #   rubin-nublado-client
     #   uvicorn
-rubin-nublado-client==7.1.1 \
-    --hash=sha256:8bf14bc21f26916123bc692d00bbab43d1b190529368b6e0214c5b8be1295bbb \
-    --hash=sha256:c186a0f8b207b998fecf5cef00244dbd8416eb8ae42357011a4dc9177b93a1cb
+rubin-nublado-client==7.1.2 \
+    --hash=sha256:017e18da75e7184c6e9e40d61a0f9a0d5f248c5007f99683f6d5f50f1c6a3fcd \
+    --hash=sha256:a2e7d8b6d3162dad2d7dc642e01b4070ce720fa49099436b25b0bd904c5173ad
     # via -r requirements/main.in
 safir==6.4.0 \
     --hash=sha256:ba7af071eab0d198e6e15a2117028566f3f4237e02e2278e8bfc2633a7c68228 \

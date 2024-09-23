@@ -14,10 +14,19 @@ asgi-lifespan
 coverage[toml]
 httpx
 mypy
-pydantic
 pytest
 pytest-asyncio
 pytest-cov
+respx
+
+# Typing
+types-requests
+types-PyYAML
 
 # Documentation
-scriv
+scriv[toml]
+
+autodoc_pydantic
+documenteer[guide]>1
+sphinx
+sphinxcontrib-redoc

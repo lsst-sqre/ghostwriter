@@ -1,0 +1,12 @@
+[project]
+title = "Ghostwriter"
+copyright = "2024 Association of Universities for Research in Astronomy, Inc. (AURA)"
+
+[project.python]
+package = "ghostwriter"
+
+[project.openapi]
+openapi_path = "_static/openapi.json"
+
+[project.openapi.generator]
+function = "ghostwriter.main:create_openapi"

@@ -6,6 +6,7 @@
 #
 # After editing, update requirements/main.txt by running:
 #     make update-deps
+# (make-update-deps-no-hashes while we're using an unreleased RSP client)
 
 # These dependencies are for fastapi including some optional features.
 fastapi
@@ -15,4 +16,6 @@ uvicorn[standard]
 # Other dependencies.
 pydantic
 pydantic-settings
+PyYAML
+rubin-nublado-client
 safir>=5

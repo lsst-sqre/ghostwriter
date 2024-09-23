@@ -14,7 +14,7 @@
 #   - Runs a non-root user.
 #   - Sets up the entrypoint and port.
 
-FROM python:3.12.2-slim-bookworm as base-image
+FROM python:3.12.2-slim-bookworm AS base-image
 
 # Update system packages
 COPY scripts/install-base-packages.sh .
@@ -65,4 +65,4 @@ USER appuser
 EXPOSE 8080
 
 # Run the application.
-CMD ["uvicorn", "ghostwriter.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "ghostwriter.main:create_app", "--host", "0.0.0.0", "--port", "8080"]

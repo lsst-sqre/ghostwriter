@@ -1,0 +1,3 @@
+environment_url: https://data.example.org
+mapping_file: routing.yaml
+log_level: DEBUG

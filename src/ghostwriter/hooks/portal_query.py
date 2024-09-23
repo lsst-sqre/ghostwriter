@@ -68,10 +68,9 @@ async def _check_query_notebook(
     user_endpoint: str,
 ) -> bool:
     nb_endpoint = (
-        f"{user_endpoint}/api/contents/notebooks/queries"
-        f"/portal_{query_id}.ipynb"
+        f"{user_endpoint}/files/notebooks/queries/portal_{query_id}.ipynb"
     )
-    resp = await client.http.get(nb_endpoint)
+    resp = await client.http.head(nb_endpoint)
     if resp.status_code == 200:
         LOGGER.debug("Notebook for query exists", query_id=query_id)
         return True

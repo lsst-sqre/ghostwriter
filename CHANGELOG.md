@@ -10,9 +10,7 @@ Find changes for the upcoming release in the project's [changelog.d directory](h
 <a id='changelog-0.1.1'></a>
 ## 0.1.1 (2024-09-23)
 
-### Bug fixes
-
-- Make canonical name of client 'rubin.nublado.client'
+This release contained no user-visible changes.
 
 <a id='changelog-0.1.0'></a>
 ## 0.1.0 (2024-09-23)

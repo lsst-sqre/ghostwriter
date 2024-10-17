@@ -6,7 +6,7 @@ Hooks are units of work carried out before the redirect for the user's browser i
 
 There is a list of hooks (possibly empty) for each route specified in the configuration.
 
-Each hook is run in sequence.If any hook raises an exception, the user will receive an error rather than a redirect.
+Each hook is run in sequence. If any hook raises an exception, the user will receive an error rather than a redirect.
 
 Because (at least at present) hooks are, by definition, located inside the ``ghostwriter.hooks`` Python module namespace, any additions or modifications to hooks are code and repository changes.
 Therefore, any proposed hooks or modififactions to existing ones will need to go through the SQuaRE PR process.
@@ -19,7 +19,7 @@ A hook is an ``async`` Python function that takes one argument, a ``ghostwriter.
 To signal failure, a hook should raise an ``Exception``.
 
 If a hook does not wish to modify the parameters used by future hooks or
-route substitution, it should return None.
+route substitution, it should return ``None``.
 
 If it does return an object, that object will first be checked to ensure only the ``target`` and ``unique_id`` fields changed.
 If any other field changed, an exception will be raised.
@@ -41,10 +41,12 @@ Two fields are only for use by the hook itself: those are ``target`` and ``uniqu
 The ``target`` field will be injected when the hook is run, and the ``unique_id`` field may be populated.
 These two are the only fields a hook is permitted to change if it returns a ``Parameters`` object.
 The ``target`` may need to be rewritten to accomodate a ``unique_id``.
-The motivation here is simply to avoid rewriting existing files: the correct response is context-dependendent, and might be to redirect to the existing file, but it equally well might be to create a new file under a different name.
+
+The motivation here is simply to avoid rewriting existing files: the correct response is context-dependent, and might be to redirect to the existing file, but it equally well might be to create a new file under a different name.
 In this case, the file name stem (that is, the part before the suffix) might need to be appended with a ``unique_id``, which could be (again, the best choice depends on context) a serial number, as in ``Untitled2.ipynb``, or a string representation of the date and time, or simply a UUID.
 The ``unique_id`` can be any string legal in a filename, as long as the filename containing it will be distinct from any other filename in the directory.
 Guaranteeing that it is unique is the job of the hook writer.
+
 Given the context, the existing hooks do not worry much about race conditions.
 If you are using the date or an incrementing integer...you are still in an RSP context, so it's very unlikely a user will go to the same redirected URL twice in the same microsecond, or even twice within the time it takes to write out a notebook.  If you do have some high-frequency use case, a UUID would be a better choice.
 
@@ -62,7 +64,7 @@ With great power comes great responsibility.
 Example
 =======
 
-The ``portal_query`` hook provides a moderately complex workflow.
+The `portal_query <https://github.com/lsst-sqre/ghostwriter/blob/main/src/ghostwriter/hooks/portal_query.py>`__ hook provides a moderately complex workflow.
 
 Note that it assumes a running Lab for the user.
 

@@ -61,7 +61,7 @@ The ``/nb`` route will carry the user to the Hub.
 
 From there, the ``/user/${user}/lab/tree`` route will take the user to a particular file within their space.
 
-The rest of the path specifies the directory in which the notebook can be found, and constructs the filename and an ``.ipynb`` suffix.
+The rest of the path specifies the directory in which the notebook can be found, and constructs the filename, adding the suffix ``.ipynb``.
 
 For each route, the ``ensure_running_lab`` hook is run, which does exactly what you would expect from the name: if a user does not have a running lab, a new lab, running the currently-recommended image in a medium-size container (these parameters were chosen because they are those suggested for running tutorial notebooks), will be spawned on the user's behalf.
 

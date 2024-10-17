@@ -16,7 +16,8 @@ There are two initial use cases: the first is to allow specification of a generi
 
 The second is to allow appending a Portal UWS query ID to a generic route, and have that open a templated notebook in a user's Lab containing retrieval of that query and conversion to a table.
 
-This is accomplished through a configuration file specifying the routes that get redirected and personalized, and for each route a list of hooks applied to do work before the redirection is implemented.
+This is accomplished through a configuration file specifying the routes
+that get redirected and personalized.  For each route, a sequence of hooks, each applied to do work and possibly further transform the redirection target, is run.  Finally the redirection occurs.
 
 .. grid:: 1
 

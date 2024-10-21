@@ -6,13 +6,11 @@ hooks.
 
 from urllib.parse import urljoin
 
-import structlog
 from rubin.nublado.client import NubladoClient
 
 from ..exceptions import HookError
 from ..models.substitution import Parameters
-
-LOGGER = structlog.get_logger("ghostwriter")
+from ._logger import LOGGER
 
 
 async def portal_query(params: Parameters) -> None:

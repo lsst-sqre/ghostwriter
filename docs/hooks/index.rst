@@ -21,7 +21,7 @@ To signal failure, a hook should raise an ``Exception``.
 If a hook does not wish to modify the parameters used by future hooks or
 route substitution, it should return ``None``.
 
-If it does return an object, that object will first be checked to ensure only the ``target`` and ``unique_id`` fields changed.
+If it does return an object, that object will first be checked to ensure only the ``target``, ``unique_id``, and/or ``final`` fields changed.
 If any other field changed, an exception will be raised.
 The returned ``Parameters`` object will be used as the input to
 subsequent hooks and to update the target path that will be substituted.
@@ -37,15 +37,22 @@ Obviously that begs the question of "what's in a ``Parameters`` object?"
 
 Three of the fields are obvious: they are ``base_url``, ``path``, and ``user``, all used in path construction for the redirect.
 
-Two fields are only for use by the hook itself: those are ``target`` and ``unique_id``.
+Four fields are only for use by the hook itself: those are ``target``, ``unique_id``, ``strip``, and ``final``.
 The ``target`` field will be injected when the hook is run, and the ``unique_id`` field may be populated.
-These two are the only fields a hook is permitted to change if it returns a ``Parameters`` object.
+These four are the only fields a hook is permitted to change if it returns a ``Parameters`` object.
 The ``target`` may need to be rewritten to accomodate a ``unique_id``.
 
-The motivation here is simply to avoid rewriting existing files: the correct response is context-dependent, and might be to redirect to the existing file, but it equally well might be to create a new file under a different name.
+The motivation of ``unique_id`` is simply to avoid rewriting existing files: the correct response is context-dependent, and might be to redirect to the existing file, but it equally well might be to create a new file under a different name.
 In this case, the file name stem (that is, the part before the suffix) might need to be appended with a ``unique_id``, which could be (again, the best choice depends on context) a serial number, as in ``Untitled2.ipynb``, or a string representation of the date and time, or simply a UUID.
 The ``unique_id`` can be any string legal in a filename, as long as the filename containing it will be distinct from any other filename in the directory.
 Guaranteeing that it is unique is the job of the hook writer.
+
+The ``strip`` field controls whether or not the path prefix is stripped from the target path.  Sometimes it is useful not to strip it, particularly in conjunction with ``final``.
+
+The ``final`` field is used to assert that hook processing should stop here and that ghostwriter should proceed with a redirect to the current value of ``target``.
+This is used in ``ensure_lab`` to redirect the user to a spawner page, forcing them to choose an image and size.
+The constructed ``target`` relies on the fact that once spawned, the specified path will be respected by the running lab, and it will have been constructed to hit a proxy endpoint, which will itself issue a redirect to throw the user back via the same redirection they've just come through.
+However, this time, ``ensure_lab`` will return ``None`` and therefore hook processing will continue, picking out the correct file inside the user lab.
 
 Given the context, the existing hooks do not worry much about race conditions.
 If you are using the date or an incrementing integer...you are still in an RSP context, so it's very unlikely a user will go to the same redirected URL twice in the same microsecond, or even twice within the time it takes to write out a notebook.  If you do have some high-frequency use case, a UUID would be a better choice.

@@ -9,11 +9,8 @@ from pathlib import Path
 from string import Template
 from urllib.parse import urljoin
 
-import structlog
-
 from ..models.substitution import Parameters
-
-LOGGER = structlog.get_logger("ghostwriter")
+from ._logger import LOGGER
 
 
 async def github_notebook(params: Parameters) -> Parameters | None:

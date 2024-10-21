@@ -19,6 +19,8 @@ class Parameters:
     client: NubladoClient
     target: str | None = None
     unique_id: str | None = None
+    strip: bool = True
+    final: bool = False
 
     def __str__(self) -> str:
         ret = f"Parameters[User: '{self.user}'; Base URL '{self.base_url}'; "
@@ -27,6 +29,7 @@ class Parameters:
             ret += f"Target: '{self.target}'; "
         if self.unique_id:
             ret += f"UniqueID: {self.unique_id}; "
+        ret += f"Final: {self.final}; "
         ret += "Token and RSP client redacted]"
         return ret
 

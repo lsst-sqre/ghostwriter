@@ -29,6 +29,7 @@ class Parameters:
             ret += f"Target: '{self.target}'; "
         if self.unique_id:
             ret += f"UniqueID: {self.unique_id}; "
+        ret += f"Strip: {self.strip}; "
         ret += f"Final: {self.final}; "
         ret += "Token and RSP client redacted]"
         return ret

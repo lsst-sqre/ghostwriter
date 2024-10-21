@@ -13,7 +13,7 @@ from ..models.substitution import Parameters
 from ._logger import LOGGER
 
 
-async def github_notebook(params: Parameters) -> Parameters | None:
+async def github_notebook(params: Parameters) -> Parameters:
     """Check out a particular notebook from GitHub."""
     client = params.client
     LOGGER.debug("Logging in to hub", user=params.user)
@@ -26,32 +26,42 @@ async def github_notebook(params: Parameters) -> Parameters | None:
         # We know the stream output should be the serial number and
         # a newline.
         serial = (await lab_session.run_python(code)).strip()
-    if serial and serial != "0" and params.target is not None:
-        #
-        # params.target is never None, because it's injected by run_hooks(),
-        # but mypy doesn't know that.
-        #
-        # We had to change the filename and filename schema.
-        # Return a modified Parameters object.
-        #
-        targetcomp = params.target.split("/")
-        targetcomp[-1] = "${path}-${unique_id}.ipynb"
-        target = "/".join(targetcomp)
-        unique_id = str(serial)
-        LOGGER.debug(
-            "Continuing to redirect", target=target, unique_id=unique_id
-        )
-        return Parameters(
-            user=params.user,
-            base_url=params.base_url,
-            token=params.token,
-            client=params.client,
-            path=params.path,
-            target=target,
-            unique_id=unique_id,
-        )
-    LOGGER.debug("Continuing to redirect; params unchanged")
-    return None
+
+    # Honestly it's easier to just unconditionally rewrite the target
+    # than to figure out whether it needs rewriting.
+
+    # Start with the common fragment
+    target = (
+        f"{params.base_url}nb/user/{params.user}/lab/tree/notebooks"
+        "/on-demand/github.com/"
+    )
+    # Remove branch information, if any (the checkout will have handled
+    # it in the code we ran to get the serial).
+    path = params.path.split("@")[0]
+    if path.startswith("notebooks/github.com/"):
+        # Needs stripping
+        path = path[(len("notebooks/github.com/")) :]
+    if path.endswith(".ipynb"):
+        # Also needs stripping
+        path = path[: -(len(".ipynb"))]
+    unique_id: str | None = None
+    if serial and serial != "0":
+        # Glue in serial if it is nonzero
+        unique_id = serial
+        path += f"-{unique_id}"
+    path += ".ipynb"  # And add the extension
+    target += path
+    new_param = Parameters(
+        user=params.user,
+        base_url=params.base_url,
+        token=params.token,
+        client=params.client,
+        path=params.path,
+        target=target,
+        unique_id=unique_id,
+    )
+    LOGGER.debug("Continuing to redirect", param=new_param)
+    return new_param
 
 
 def _get_user_endpoint(base_url: str, user: str) -> str:

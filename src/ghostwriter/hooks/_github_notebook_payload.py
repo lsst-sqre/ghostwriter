@@ -58,5 +58,5 @@ nb.write_text(content)
 
 # Finally, print the value of ``serial``, which we will capture as
 # a notebook stream output to determine whether we need to modify
-# the path and unique_id in rewrite parameters.
+# the target and unique_id in rewrite parameters.
 print(serial)

@@ -1,64 +1,35 @@
-"""Ensure that the user has a running lab."""
-
-import asyncio
-
-import structlog
-from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models import (
-    NubladoImage,
-    NubladoImageByClass,
-    NubladoImageClass,
-    NubladoImageSize,
-)
+"""Ensure that the user has a running lab by dropping them in the spawner form
+if they don't, and then slingshotting them through the lab ghostwriter endpoint
+to restart the redirect process.  Requires d_2024_10_19 (corresponds to
+w_2024_10_43) or later.
+"""
 
 from ..models.substitution import Parameters
-
-LAB_SPAWN_TIMEOUT = 90
-LOGGER = structlog.get_logger("ghostwriter")
+from ._logger import LOGGER
 
 
-async def ensure_running_lab(params: Parameters) -> None:
+async def ensure_running_lab(params: Parameters) -> Parameters | None:
     """Start a Lab if one is not present."""
     LOGGER.debug(f"Checking for running Lab for {params}")
     client = params.client
     LOGGER.debug("Logging in to Hub")
     await client.auth_to_hub()
     stopped = await client.is_lab_stopped()
-    if stopped:
-        LOGGER.debug(f"Starting new 'recommended' Lab for {params.user}")
-        await _spawn_lab(client)
-    else:
+    if not stopped:
         LOGGER.debug(f"{params.user} already has a running Lab")
-    LOGGER.debug("Lab spawned; proceeding with redirection")
-
-
-async def _spawn_lab(client: NubladoClient) -> None:
-    image = _choose_image()
-    await client.spawn_lab(image)
-    await _follow_progress(client)
-
-
-def _choose_image() -> NubladoImage:
-    """Because the primary use case of this redirection service is
-    to launch tutorial notebooks, our "start a new lab" parameters
-    are going to be the currently recommended lab, and Medium size,
-    because that's how the tutorial notebooks are generally set up
-    to run.  Maybe we will do something more sophisticated later.
-    """
-    return NubladoImageByClass(
-        image_class=NubladoImageClass.RECOMMENDED, size=NubladoImageSize.Medium
+        return None
+    LOGGER.debug(f"Sending {params.user} to spawner")
+    LOGGER.debug(f"Input parameters {params}")
+    new_p = Parameters(
+        user=params.user,
+        base_url=params.base_url,
+        path=params.path,
+        token=params.token,
+        client=params.client,
+        target="${base_url}/nb/user/${user}/rubin/ghostwriter/${path}",
+        unique_id=params.unique_id,
+        strip=False,
+        final=True,
     )
-
-
-async def _follow_progress(client: NubladoClient) -> None:
-    LOGGER.debug("Waiting for lab to spawn")
-    progress = client.watch_spawn_progress()
-    try:
-        async with asyncio.timeout(LAB_SPAWN_TIMEOUT):
-            async for message in progress:
-                LOGGER.debug(f"Lab spawn message: {message.message}")
-                if message.ready:
-                    break
-    except TimeoutError:
-        LOGGER.exception(f"Lab did not spawn in {LAB_SPAWN_TIMEOUT} seconds")
-        raise
+    LOGGER.debug(f"Output parameters {new_p}")
+    return new_p

@@ -118,8 +118,9 @@ async def rewrite_route(
     tmpl = Template(params.target)
     mapping = params.rewrite_mapping()
     full_path = mapping["path"]
-    # Strip matched path
-    mapping["path"] = full_path[(len(route.source_prefix) - 1) :]
+    # Strip matched path if requested
+    if params.strip:
+        mapping["path"] = full_path[(len(route.source_prefix) - 1) :]
     logger.debug(f"Rewriting '{params.target}' with '{mapping}'")
     try:
         # Canonicalize the resulting URL (and throw an error if it's
@@ -156,7 +157,7 @@ async def run_hooks(
     `~ghostwriter.models.substitution.Parameters`
         Parameters to pass to the URL rewrite.  These may not be the same
     as the ones that we received as our input parameters (specifically,
-    target and unique_id may have changed).
+    target, unique_id, and/or final may have changed).
     """
     current_target = route.target
     params.target = current_target
@@ -187,6 +188,8 @@ async def run_hooks(
                 raise RuntimeError(errstr)  # Immediately converted
             if res.target is None:
                 res.target = current_target  # No parameters changed
+            if res.final:
+                return res
             if res.target != current_target:
                 # Update current_target with result field if it changed
                 current_target = res.target

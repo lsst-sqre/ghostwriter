@@ -9,7 +9,7 @@ There is a list of hooks (possibly empty) for each route specified in the config
 Each hook is run in sequence. If any hook raises an exception, the user will receive an error rather than a redirect.
 
 Because (at least at present) hooks are, by definition, located inside the ``ghostwriter.hooks`` Python module namespace, any additions or modifications to hooks are code and repository changes.
-Therefore, any proposed hooks or modififactions to existing ones will need to go through the SQuaRE PR process.
+Therefore, any proposed hooks or modifications to existing ones will need to go through the SQuaRE PR process.
 
 Anatomy of a Hook
 =================

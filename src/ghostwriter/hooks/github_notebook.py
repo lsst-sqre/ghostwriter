@@ -30,20 +30,30 @@ async def github_notebook(params: Parameters) -> Parameters:
     # Honestly it's easier to just unconditionally rewrite the target
     # than to figure out whether it needs rewriting.
 
+    return _get_new_params(serial, params)
+
+
+def _get_new_params(serial: str, params: Parameters) -> Parameters:
     # Start with the common fragment
     target = (
         f"{params.base_url}nb/user/{params.user}/lab/tree/notebooks"
         "/on-demand/github.com/"
     )
+
     # Remove branch information, if any (the checkout will have handled
     # it in the code we ran to get the serial).
     path = params.path.split("@")[0]
-    if path.startswith("notebooks/github.com/"):
+
+    # Canonicalize path.
+    prefix = "notebooks/github.com/"
+    if path.startswith(prefix):
         # Needs stripping
-        path = path[(len("notebooks/github.com/")) :]
+        path = path[(len(prefix)) :]
     if path.endswith(".ipynb"):
         # Also needs stripping
         path = path[: -(len(".ipynb"))]
+
+    # Add discriminator if needed
     unique_id: str | None = None
     if serial and serial != "0":
         # Glue in serial if it is nonzero
@@ -51,6 +61,7 @@ async def github_notebook(params: Parameters) -> Parameters:
         path += f"-{unique_id}"
     path += ".ipynb"  # And add the extension
     target += path
+
     new_param = Parameters(
         user=params.user,
         base_url=params.base_url,

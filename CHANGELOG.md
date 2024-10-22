@@ -7,6 +7,17 @@ Find changes for the upcoming release in the project's [changelog.d directory](h
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-0.1.2'></a>
+## 0.1.2 (2024-10-22)
+
+### New features
+
+- Make check-for-lab interactive and push user through spawner.
+
+### Other changes
+
+- Improve documentation.
+
 <a id='changelog-0.1.1'></a>
 ## 0.1.1 (2024-09-23)
 

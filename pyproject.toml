@@ -90,10 +90,14 @@ python_files = ["tests/*.py", "tests/*/*.py"]
 asyncio_default_fixture_loop_scope = "session"
 
 # Use the generic Ruff configuration in ruff.toml and extend it with only
-# project-specific settings. Add a [tool.ruff.lint.extend-per-file-ignores]
-# section for project-specific ignore rules.
+# project-specific settings.
 [tool.ruff]
 extend = "ruff-shared.toml"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"src/ghostwriter/hooks/_github_notebook_payload.py" = [
+    "T201",  # notebook payload is allowed to use print
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ghostwriter", "tests"]

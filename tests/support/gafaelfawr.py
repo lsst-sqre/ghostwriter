@@ -15,10 +15,10 @@ from httpx import Request, Response
 from pydantic import BaseModel, Field
 
 __all__ = [
+    "GafaelfawrUser",
+    "GafaelfawrUserInfo",
     "MockGafaelfawr",
     "register_mock_gafaelfawr",
-    "GafaelfawrUserInfo",
-    "GafaelfawrUser",
 ]
 
 ### Models

@@ -126,13 +126,13 @@ async def rewrite_route(
         # Canonicalize the resulting URL (and throw an error if it's
         # wildly not URL-looking).
         results = str(HttpUrl(tmpl.substitute(mapping)))
-        logger.debug(f"Rewritten target: '{results}'")
-        return results
     except Exception as exc:
         raise ResolutionError(
-            f"Resolving {route.target} with parameters {params}"
-            f" failed: {exc}"
+            f"Resolving {route.target} with parameters {params} failed: {exc}"
         ) from exc
+    else:
+        logger.debug(f"Rewritten target: '{results}'")
+        return results
 
 
 async def run_hooks(

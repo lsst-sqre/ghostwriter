@@ -47,9 +47,7 @@ def _get_new_params(serial: str, params: Parameters) -> Parameters:
     # Canonicalize path.
     prefix = "notebooks/github.com/"
     path = path.removeprefix(prefix)
-    if path.endswith(".ipynb"):
-        # Also needs stripping
-        path = path[: -(len(".ipynb"))]
+    path = path.removesuffix(".ipynb")
 
     # Add discriminator if needed
     unique_id: str | None = None

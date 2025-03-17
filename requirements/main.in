@@ -17,5 +17,5 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 PyYAML
-rubin-nublado-client
+rubin-nublado-client>=8.7.0
 safir>=5

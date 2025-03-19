@@ -7,6 +7,13 @@ Find changes for the upcoming release in the project's [changelog.d directory](h
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-0.2.0'></a>
+## 0.2.0 (2025-03-18)
+
+### New features
+
+- Add support for per-user subdomains for Nublado-managed JupyterLab instances.
+
 <a id='changelog-0.1.2'></a>
 ## 0.1.2 (2024-10-22)
 

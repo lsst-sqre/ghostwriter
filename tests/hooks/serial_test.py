@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 import pytest
-import pytest_asyncio
 from httpx import AsyncClient
 from rubin.nublado.client import NubladoClient
 from rubin.nublado.client.models import User
@@ -19,7 +18,7 @@ COMMON_PREFIX = (
 )
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 def std_params(config: Configuration, client: AsyncClient) -> Parameters:
     user_objs = json.loads(
         (Path(__file__).parent.parent / "support" / "users.json").read_text()

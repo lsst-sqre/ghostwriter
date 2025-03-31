@@ -8,6 +8,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+import pytest
 import pytest_asyncio
 import respx
 import yaml
@@ -55,7 +56,7 @@ async def config(test_env: Path) -> AsyncIterator[Configuration]:
     yield newconfig
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 def mock_gafaelfawr(
     respx_mock: respx.Router, config: Configuration
 ) -> MockGafaelfawr:

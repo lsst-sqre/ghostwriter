@@ -23,7 +23,7 @@ This will be rerouted from the top-level to ``/ghostwriter/rewrite/<source_prefi
 target
 ======
 
-``target`` is a string in `Python string template format <https://docs.python.org/3/library/string.html#template-strings>`__ .
+``target`` is a string in `Python string template format <https://docs.python.org/3/library/string.html#template-strings-strings>`__ .
 
 There are three template variables, defined in the ``ghostwriter.models.substitution.Parameters`` class, that you can use here: ``${base_url}``, ``${user}``, and ``${path}``.
 

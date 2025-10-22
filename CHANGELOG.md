@@ -7,6 +7,13 @@ Find changes for the upcoming release in the project's [changelog.d directory](h
 
 <!-- scriv-insert-here -->
 
+<a id='changelog-0.3.0'></a>
+## 0.3.0 (2025-10-22)
+
+### New features
+
+- Build for both amd64/arm64
+
 <a id='changelog-0.2.0'></a>
 ## 0.2.0 (2025-03-18)
 

@@ -20,12 +20,12 @@ async def github_notebook(params: Parameters) -> Parameters:
     await client.auth_to_hub()
     LOGGER.debug("Authenticating to lab")
     await client.auth_to_lab()
-    async with client.open_lab_session() as lab_session:
-        code = _get_code_from_template(params.path)
+    code = _get_code_from_template(params.path)
+    async with client.lab_session() as session:
         LOGGER.debug("Code for execution in Lab context", code=code)
         # We know the stream output should be the serial number and
         # a newline.
-        serial = (await lab_session.run_python(code)).strip()
+        serial = (await session.run_python(code)).strip()
 
     # Honestly it's easier to just unconditionally rewrite the target
     # than to figure out whether it needs rewriting.

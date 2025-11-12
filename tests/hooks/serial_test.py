@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models import User
 
 from ghostwriter.config import Configuration
 from ghostwriter.hooks.github_notebook import _get_new_params
@@ -25,10 +24,9 @@ def std_params(config: Configuration, client: AsyncClient) -> Parameters:
     )
     token = next(iter(user_objs.keys()))
     username = user_objs[token]["username"]
-    user = User(username=username, token=token)
-    nc = NubladoClient(user=user, base_url=str(config.environment_url))
+    nc = NubladoClient(username, token)
     return Parameters(
-        user=user.username,
+        user=username,
         base_url=str(config.environment_url),
         token=token,
         client=nc,

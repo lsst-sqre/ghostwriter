@@ -41,10 +41,7 @@ class ProcessContext:
         self.base_url = self.config.environment_url
         if self.base_url is None:
             raise RuntimeError("config.environment_url must be set")
-        self.client_manager = ClientManager(
-            base_url=self.base_url,
-            logger=self.logger,
-        )
+        self.client_manager = ClientManager(self.logger)
         self.mapping = self.load_map()
 
     def load_map(self) -> RouteCollection:

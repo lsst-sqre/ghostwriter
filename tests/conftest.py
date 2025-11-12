@@ -15,6 +15,7 @@ import yaml
 from asgi_lifespan import LifespanManager
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from rubin.repertoire import Discovery, register_mock_discovery
 
 from ghostwriter.config import Configuration
 from ghostwriter.dependencies.context import context_dependency
@@ -106,3 +107,12 @@ async def client(
         follow_redirects=False,
     ) as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def mock_discovery(
+    respx_mock: respx.Router, monkeypatch: pytest.MonkeyPatch
+) -> Discovery:
+    monkeypatch.setenv("REPERTOIRE_BASE_URL", "https://example.com/repertoire")
+    path = Path(__file__).parent / "data" / "discovery.json"
+    return register_mock_discovery(respx_mock, path)

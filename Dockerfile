@@ -1,14 +1,11 @@
-# This Dockerfile has four stages:
+# This Dockerfile has three stages:
 #
 # base-image
 #   Updates the base Python image with security patches and common system
 #   packages. This image becomes the base of all other images.
-# dependencies-image
-#   Installs third-party dependencies (requirements/main.txt) into a virtual
-#   environment. This virtual environment is ideal for copying across build
-#   stages.
 # install-image
-#   Installs the app into the virtual environment.
+#   Installs dependencies and the application into a virtual environment.
+#   This virtual environment is ideal for copying across build stages.
 # runtime-image
 #   - Copies the virtual environment into place.
 #   - Runs a non-root user.
@@ -18,45 +15,44 @@ FROM python:3.14.0-slim-bookworm AS base-image
 
 # Update system packages
 COPY scripts/install-base-packages.sh .
-RUN ./install-base-packages.sh && rm ./install-base-packages.sh
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    ./install-base-packages.sh && rm ./install-base-packages.sh
 
-FROM base-image AS dependencies-image
+FROM base-image AS install-image
+
+# Install uv.
+COPY --from=ghcr.io/astral-sh/uv:0.9.9 /uv /bin/uv
 
 # Install system packages only needed for building dependencies.
 COPY scripts/install-dependency-packages.sh .
-RUN ./install-dependency-packages.sh
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    ./install-dependency-packages.sh
 
-# Create a Python virtual environment
-ENV VIRTUAL_ENV=/opt/venv
-RUN python -m venv $VIRTUAL_ENV
-# Make sure we use the virtualenv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-# Put the latest pip and setuptools in the virtualenv
-RUN pip install --upgrade --no-cache-dir pip setuptools wheel
+# Disable hard links during uv package installation since we're using a
+# cache on a separate file system.
+ENV UV_LINK_MODE=copy
 
-# Install the app's Python runtime dependencies
-COPY requirements/main.txt ./requirements.txt
-RUN pip install --quiet --no-cache-dir -r requirements.txt
+# Install the dependencies.
+WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --frozen --no-default-groups --compile-bytecode --no-install-project
 
-FROM dependencies-image AS install-image
-
-# Use the virtualenv
-ENV PATH="/opt/venv/bin:$PATH"
-
-COPY . /workdir
-WORKDIR /workdir
-RUN pip install --no-cache-dir .
+# Install the application itself.
+ADD . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-default-groups --compile-bytecode --no-editable
 
 FROM base-image AS runtime-image
 
-# Create a non-root user
+# Create a non-root user.
 RUN useradd --create-home appuser
 
-# Copy the virtualenv
-COPY --from=install-image /opt/venv /opt/venv
-
-# Make sure we use the virtualenv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy the virtualenv.
+COPY --from=install-image /app/.venv /app/.venv
 
 # Switch to the non-root user.
 USER appuser
@@ -64,5 +60,8 @@ USER appuser
 # Expose the port.
 EXPOSE 8080
 
+# Make sure we use the virtualenv.
+ENV PATH="/app/.venv/bin:$PATH"
+
 # Run the application.
-CMD ["uvicorn", "ghostwriter.main:create_app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "--factory", "ghostwriter.main:create_app", "--host", "0.0.0.0", "--port", "8080"]

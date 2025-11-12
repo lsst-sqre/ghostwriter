@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -27,8 +27,8 @@ from .support.gafaelfawr import (
 )
 
 
-@pytest_asyncio.fixture(scope="session")
-async def test_env() -> AsyncIterator[Path]:
+@pytest.fixture(scope="session")
+def test_env() -> Iterator[Path]:
     with TemporaryDirectory() as td:
         fake_root = Path(td)
 
@@ -49,11 +49,10 @@ async def test_env() -> AsyncIterator[Path]:
         yield newconfig
 
 
-@pytest_asyncio.fixture(scope="session")
-async def config(test_env: Path) -> AsyncIterator[Configuration]:
+@pytest.fixture(scope="session")
+def config(test_env: Path) -> Configuration:
     with test_env.open() as f:
-        newconfig = Configuration.model_validate(yaml.safe_load(f))
-    yield newconfig
+        return Configuration.model_validate(yaml.safe_load(f))
 
 
 @pytest.fixture

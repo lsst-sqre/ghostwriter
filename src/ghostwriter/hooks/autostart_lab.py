@@ -4,8 +4,8 @@ given `recommended` in `medium` size.
 
 import asyncio
 
-from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models import (
+from rubin.nublado.client import (
+    NubladoClient,
     NubladoImage,
     NubladoImageByClass,
     NubladoImageClass,

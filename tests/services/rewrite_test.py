@@ -4,7 +4,6 @@ import pytest
 import structlog
 import yaml
 from rubin.nublado.client import NubladoClient
-from rubin.nublado.client.models import User
 
 from ghostwriter.config import Configuration
 from ghostwriter.models.substitution import Parameters
@@ -27,11 +26,8 @@ async def test_rewrite(config: Configuration) -> None:
         path="tutorials/notebook05",
         base_url="https://data.example.com",
         client=NubladoClient(
-            user=User(
-                username="rachel",
-                token="token-of-affection",
-            ),
-            base_url="https://data.example.com",
+            username="rachel",
+            token="token-of-affection",
             logger=logger,
         ),
     )

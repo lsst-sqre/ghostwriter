@@ -483,6 +483,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "respx" },
+    { name = "rubin-repertoire" },
 ]
 docs = [
     { name = "autodoc-pydantic" },
@@ -512,7 +513,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">2" },
     { name = "pydantic-settings", specifier = ">2" },
     { name = "pyyaml" },
-    { name = "rubin-nublado-client", specifier = ">=8.7.0" },
+    { name = "rubin-nublado-client", git = "https://github.com/lsst-sqre/nublado?subdirectory=client&branch=main" },
     { name = "safir", specifier = ">=5" },
     { name = "uvicorn", extras = ["standard"] },
 ]
@@ -526,6 +527,7 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "respx" },
+    { name = "rubin-repertoire" },
 ]
 docs = [
     { name = "autodoc-pydantic" },
@@ -1581,19 +1583,34 @@ wheels = [
 
 [[package]]
 name = "rubin-nublado-client"
-version = "8.17.1"
-source = { registry = "https://pypi.org/simple" }
+version = "8.17.2.dev131+gad88b9a45"
+source = { git = "https://github.com/lsst-sqre/nublado?subdirectory=client&branch=main#ad88b9a4595935840bc5843b73acae4ffc409eea" }
 dependencies = [
     { name = "httpx" },
     { name = "httpx-sse" },
     { name = "pydantic" },
+    { name = "rubin-repertoire" },
     { name = "safir" },
     { name = "structlog" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/55/a8/8256063d60435a7961747b2568a5344c843834ebd9c8efe5d6d3dddad82b/rubin_nublado_client-8.17.1.tar.gz", hash = "sha256:d3cdc6c68be9d2b34d5be5433e779677f527b4ef44c7a896959311ef96d9fb28", size = 74095, upload-time = "2025-10-17T23:38:44.299Z" }
+
+[[package]]
+name = "rubin-repertoire"
+version = "0.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "fastapi" },
+    { name = "httpx" },
+    { name = "jinja2" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "pyyaml" },
+    { name = "safir" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/ec/dd501e192c4209dc81e9e3c61a28314d5b460a666a0ca44c83e2f27c9808/rubin_repertoire-0.6.0.tar.gz", hash = "sha256:1948d4dd088ce98da26f9f93eeda51c11fc3c7865308190547bd3b657d245421", size = 15506, upload-time = "2025-10-17T17:52:31.785Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/52/ac91cb2a1e1ab1fb653c9fd99423b53ad7283ec00e116787544e32a8f858/rubin_nublado_client-8.17.1-py3-none-any.whl", hash = "sha256:a56364e09cf4e26b4583fb1e2560299b1e0900ce6165e8e2fc626ca4dc121e9b", size = 34114, upload-time = "2025-10-17T23:38:42.481Z" },
+    { url = "https://files.pythonhosted.org/packages/50/2b/b923fd68bc20bcc4d45180a787e8c7337eede60a3937d9b45cf775efd189/rubin_repertoire-0.6.0-py3-none-any.whl", hash = "sha256:c7f2a1f29e14c30b728145be7a7c189686b4e78945480a45b63aa788d759d9ff", size = 18284, upload-time = "2025-10-17T17:52:30.533Z" },
 ]
 
 [[package]]

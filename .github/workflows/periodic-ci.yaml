@@ -48,6 +48,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
+    permissions:
+      contents: read
+      id-token: write
+
     steps:
       - uses: actions/checkout@v6
         with:
@@ -60,6 +64,8 @@ jobs:
 
       - name: Run tox
         run: uv run --only-group=tox tox run -e docs,docs-linkcheck
+        env:
+          OOK_TOKEN: ${{ secrets.OOK_TOKEN }}
 
       - name: Report status
         if: failure()
